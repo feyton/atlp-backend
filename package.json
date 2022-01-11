@@ -1,0 +1,35 @@
+{
+  "name": "atlp_backend",
+  "version": "1.0.0",
+  "description": "The Backend for the ATLP Project by Fabrice",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index",
+    "dev": "nodemon index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/feyton/atlp-backend.git"
+  },
+  "keywords": [
+    "andela",
+    "fabrice",
+    "atlp",
+    "heroku",
+    "api"
+  ],
+  "author": "Fabrice Hafashimana",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/feyton/atlp-backend/issues"
+  },
+  "homepage": "https://github.com/feyton/atlp-backend#readme",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
