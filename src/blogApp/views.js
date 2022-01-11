@@ -92,7 +92,7 @@ const getBlogsView = async (req, res) => {
   // ? postAuthor: posts =
 
   posts = await Blog.find({ published: true });
-  res.status(200).json({ data: blogs });
+  res.status(200).json({ data: posts });
 };
 
 // Category Views

@@ -60,6 +60,10 @@ const blogSchema = new Schema(
   }
 );
 
+blogSchema.pre('save', function (user) {
+  
+})
+
 const blogModel = model("Blog", blogSchema);
 const categoryModel = model("Category", categorySchema);
 

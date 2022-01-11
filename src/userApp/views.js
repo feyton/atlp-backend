@@ -3,6 +3,8 @@
 //Remember to import all in routes
 
 import * as models from "./models.js";
+import jsonwebtoken from "jsonwebtoken";
+const jwt = jsonwebtoken;
 const User = models.userModel;
 
 const loginView = async (req, res) => {
@@ -17,7 +19,10 @@ const loginView = async (req, res) => {
     }
 
     const validatePassword = user.isValidPassword(password);
-    !validatePassword && res.status(400).json({ message: "wrong credentials" });
+    if (!validatePassword) {
+      return res.status(400).json({ message: "wrong credentials" });
+    }
+
     let userInfo = {
       email: user.email,
       lastName: user.lastName,
@@ -27,7 +32,33 @@ const loginView = async (req, res) => {
       createdAt: user.createdAt,
       _id: user._id,
     };
-    return res.status(200).json({ data: userInfo });
+    const accessToken = await jwt.sign(
+      {
+        email: userInfo.email,
+        usedId: userInfo._id,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "120s",
+      }
+    );
+    const refreshToken = jwt.sign(
+      {
+        email: userInfo.email,
+        usedId: userInfo._id,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+    user.refreshToken = refreshToken;
+    await user.save();
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({ accessToken });
     //    return res.json({ message: "Login" });
   } catch (err) {
     console.log(err);
@@ -130,6 +161,47 @@ const getUserView = async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 };
+
+const refreshTokenView = async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies || !cookies.jwt) return res.sendStatus(401);
+  console.log(cookies);
+
+  const refreshToken = cookies.jwt;
+
+  const foundUser = await User.findOne({ refreshToken }).exec();
+  if (!foundUser) return res.sendStatus(403);
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    if (err || foundUser.email !== decoded.email) return res.sendStatus(403);
+    const roles = Object.values(foundUser.roles);
+    const accessToken = jwt.sign(
+      {
+        userInfo: {
+          email: decoded.email,
+          _id: decoded._id,
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "50s" }
+    );
+    res.json({ accessToken });
+  });
+};
+
+const logoutView = async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies || !cookies.jwt) return res.sendStatus(401);
+  console.log(cookies);
+
+  const refreshToken = cookies.jwt;
+
+  const foundUser = await User.findOne({ refreshToken }).exec();
+  if (!foundUser) return res.sendStatus(403);
+  foundUser.refreshToken = "";
+  res.clearCookie("jwt", { httpOnly: true });
+  await foundUser.save();
+  return res.sendStatus(204);
+};
 //add your function to export
 export {
   loginView,
@@ -137,4 +209,6 @@ export {
   updateUserView,
   deleteUserView,
   getUserView,
+  refreshTokenView,
+  logoutView,
 };
