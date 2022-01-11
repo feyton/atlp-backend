@@ -6,8 +6,6 @@ const { Schema, model } = mongoose;
 
 //define your models here
 
-const Schema = new Schema();
-
 const categorySchema = new Schema({
   title: {
     type: String,
@@ -51,7 +49,7 @@ const blogSchema = new Schema(
     photoURL: String,
     author: {
       type: Object,
-      required: true,
+      required: false,
     },
     categories: {
       type: Array,

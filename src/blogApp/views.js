@@ -4,6 +4,7 @@
 
 import * as models from "./models.js";
 const Blog = models.blogModel;
+const Category = models.categoryModel;
 
 const createBlogView = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ const createBlogView = async (req, res) => {
     if (!title || !content || !summary) {
       return res.status(403).json({ message: "Missing important data" });
     }
-    const duplicateTitle = await Blog.findOne({ title: email }).exec();
+    const duplicateTitle = await Blog.findOne({ title: title }).exec();
     if (duplicateTitle) {
       return res.status(403).json({ message: "Title already exist" });
     }
@@ -28,7 +29,8 @@ const createBlogView = async (req, res) => {
 };
 
 const updateBlogView = async (req, res) => {
-  if (req.body.blogId === req.params.id) {
+  // ToDo link post to users using the userId
+  if (req.params.id) {
     try {
       let { title, summary, content } = req.body;
 
@@ -53,7 +55,7 @@ const updateBlogView = async (req, res) => {
 };
 
 const deleteBlogView = async (req, res) => {
-  if (req.body.blogId === req.params.id) {
+  if (req.params.id) {
     try {
       await Blog.findByIdAndDelete(req.params.id);
       res.status(201).json({ message: "Blog post deleted sucessfully" });
@@ -68,7 +70,7 @@ const deleteBlogView = async (req, res) => {
 };
 
 const getBlogDetailView = async (req, res) => {
-  if (req.body.blogId === req.params.id) {
+  if (req.params.id) {
     try {
       const blog = await Blog.findById(req.params.id);
 
@@ -84,9 +86,37 @@ const getBlogDetailView = async (req, res) => {
 };
 
 const getBlogsView = async (req, res) => {
-  const blogs = await Blog.find({ published: true });
+  const postAuthor = req.query.user;
+  const cat = req.query.cat;
+  let posts;
+  // ? postAuthor: posts =
+
+  posts = await Blog.find({ published: true });
   res.status(200).json({ data: blogs });
 };
+
+// Category Views
+const createCategoryView = async (req, res) => {
+  try {
+    let { title, description } = req.body;
+    if (!title || !description) {
+      return res.status(403).json({ message: "Missing important data" });
+    }
+    const duplicateTitle = await Category.findOne({ title: title }).exec();
+    if (duplicateTitle) {
+      return res.status(403).json({ message: "Title already exist" });
+    }
+    const result = await Category.create({
+      title: title,
+      desc: description,
+    });
+    res.status(201).json({ message: "created", data: result });
+  } catch (err) {
+    console.log(err);
+    res.status(401).json({ message: err.message });
+  }
+};
+
 //add your function to export
 export {
   getBlogDetailView,
@@ -94,4 +124,5 @@ export {
   deleteBlogView,
   updateBlogView,
   getBlogsView,
+  createCategoryView,
 };

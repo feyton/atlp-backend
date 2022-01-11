@@ -5,12 +5,12 @@ import * as views from "./views.js";
 const router = Router();
 
 //write your routes here
-router.get("/")
-router.post("/:uid", views.createBlogView);
-router.get("/:uid", views.getBlogDetailView);
+router.get("/", views.getBlogsView);
+router.post("/cat", views.createCategoryView);
+router.post("/", views.createBlogView);
+router.get("/:id", views.getBlogDetailView);
 router.delete("/:id", views.deleteBlogView);
-router.put("/:uid", views.updateBlogView);
-
+router.put("/:id", views.updateBlogView);
 
 //Keep this line at the bottom
 
