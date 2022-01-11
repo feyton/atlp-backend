@@ -7,7 +7,9 @@ const router = Router();
 
 router.post("/login", views.loginView);
 router.post("/signup", views.createUserView);
-router.put('/:id', views.updateUserView)
+router.put("/profile/:id", views.updateUserView);
+router.get("/profile/:id", views.getUserView);
+router.delete("/:id", views.deleteUserView);
 
 //write your routes here
 
