@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index",
-    "dev": "nodemon index"
+    "start": "node ./src/index",
+    "dev": "nodemon ./src/index",
+    "build": "babel src -d lib",
+    "babelBuild": "babel src -d lib && node ./lib/index"
   },
   "repository": {
     "type": "git",
@@ -30,6 +32,9 @@
     "express": "^4.17.2"
   },
   "devDependencies": {
+    "@babel/cli": "^7.16.8",
+    "@babel/core": "^7.16.7",
+    "@babel/preset-env": "^7.16.8",
     "nodemon": "^2.0.15"
   }
 }
