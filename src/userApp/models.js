@@ -63,6 +63,11 @@ userSchema.methods.isValidPassword = async function (password) {
   const comparePassword = await compare(password, user.password);
   return comparePassword;
 };
+userSchema.pre("remove", function () {
+  // To Do handle post deletion when user is deleted
+  const user = this;
+  // blogPost.deleteMany({author.id:user._id})
+});
 //export your modules here
 const userModel = model("User", userSchema);
 export { userModel };
