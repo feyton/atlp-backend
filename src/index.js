@@ -3,6 +3,7 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import bodyparser from "body-parser";
+import { upload } from "./base.js";
 
 const PORT = process.env.PORT || 3500;
 
@@ -16,7 +17,9 @@ import { router as UserRouter } from "./userApp/routes.js";
 import { router as BlogRouter } from "./blogApp/routes.js";
 import { connectDB } from "./base.js";
 connectDB();
-
+app.post("/app/upload", upload.single("file"), (req, res) => {
+  res.status(200).json({ message: "File uploaded successfully" });
+});
 app.use("/", IndexRouter);
 app.use("/account", UserRouter);
 app.use("/blog", BlogRouter);
