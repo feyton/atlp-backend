@@ -8,7 +8,8 @@
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
-    "babelBuild": "babel src -d lib && node ./lib/index"
+    "babelBuild": "babel src -d lib && node ./lib/index",
+    "createApp": "python ./main.py"
   },
   "repository": {
     "type": "git",
