@@ -34,4 +34,9 @@ const verifyJWT = (req, res, next) => {
   }
 };
 
-export { userAppUtil, verifyJWT };
+const errorResponse = (error, message) => {
+  const res = { code: error.code, message: message, error: error };
+  return res;
+};
+
+export { userAppUtil, verifyJWT, errorResponse };

@@ -8,6 +8,7 @@ const Category = models.categoryModel;
 
 const createBlogView = async (req, res) => {
   try {
+    //
     let { title, content, summary } = req.body;
     if (!title || !content || !summary) {
       return res.status(403).json({ message: "Missing important data" });
@@ -16,11 +17,15 @@ const createBlogView = async (req, res) => {
     if (duplicateTitle) {
       return res.status(403).json({ message: "Title already exist" });
     }
+    const author = req.user;
+    console.log(author);
     const result = await Blog.create({
       title: title,
       content: content,
       summary: summary,
+      author: author._id,
     });
+    console.log(result.populate("author"));
     res.status(201).json({ message: "created", data: result });
   } catch (err) {
     console.log(err);
@@ -33,9 +38,11 @@ const updateBlogView = async (req, res) => {
   if (req.params.id) {
     try {
       let { title, summary, content } = req.body;
+      const author = req.user;
+      const blogPost = await Blog.findOne(req.params.id);
+      !blogPost.isAuthor(author) && res.sendStatus(403);
 
-      const updatedBlog = await Blog.findByIdAndUpdate(
-        req.params.id,
+      const updatedBlog = await blogPost.update(
         {
           title: title,
           content: content,
@@ -57,7 +64,12 @@ const updateBlogView = async (req, res) => {
 const deleteBlogView = async (req, res) => {
   if (req.params.id) {
     try {
-      await Blog.findByIdAndDelete(req.params.id);
+      const user = req.user;
+      const blog = await Blog.findById(req.params.id);
+      if (!blog.author == user._id) return res.sendStatus(402);
+
+      await blog.delete();
+
       res.status(201).json({ message: "Blog post deleted sucessfully" });
     } catch (error) {
       res.status(500).json({ message: error.message });

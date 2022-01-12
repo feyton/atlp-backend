@@ -2,9 +2,29 @@
 // link on database
 
 import mongoose from "mongoose";
+import { userModel } from "../userApp/models.js";
 const { Schema, model } = mongoose;
 
 //define your models here
+
+const commentSchema = new Schema(
+  {
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    message: String,
+    post: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 const categorySchema = new Schema({
   title: {
@@ -41,15 +61,16 @@ const blogSchema = new Schema(
       type: Date,
       default: Date.now,
     },
-    comments: [{ body: String, date: Date }],
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     meta: {
       votes: Number,
       favs: Number,
     },
     photoURL: String,
     author: {
-      type: Object,
-      required: false,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     categories: {
       type: Array,
@@ -60,12 +81,19 @@ const blogSchema = new Schema(
   }
 );
 
-blogSchema.pre('save', function (user) {
-  
-})
+blogSchema.pre("save", function (next) {
+  next();
+});
+
+blogSchema.methods.isAuthor = async function (author) {
+  const blog = this;
+  console.log(blog.author == author);
+  return (await blog.author) == author;
+};
 
 const blogModel = model("Blog", blogSchema);
 const categoryModel = model("Category", categorySchema);
+const commentModel = model("Comment", commentSchema);
 
 // const blogComment = new Schema({});
 //export your modules here
