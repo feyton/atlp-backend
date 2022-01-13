@@ -3,6 +3,9 @@
 //Remember to import all in routes
 
 import * as models from "./models.js";
+import jsonwebtoken from "jsonwebtoken";
+import { hash, compare } from "bcrypt";
+const jwt = jsonwebtoken;
 const User = models.userModel;
 
 const loginView = async (req, res) => {
@@ -11,26 +14,53 @@ const loginView = async (req, res) => {
     if (!email || !password) {
       return res.status(403).json({ message: "Bad request" });
     }
-    const user = await User.findOne({ email: email }).exec();
-    if (!user) {
+    let foundUser = await User.findOne({ email: email }).exec();
+    if (!foundUser) {
       return res.status(400).json({ message: "Wrong credentials" });
     }
 
-    const validatePassword = user.isValidPassword(password);
-    !validatePassword && res.status(400).json({ message: "wrong credentials" });
-    let userInfo = {
-      email: user.email,
-      lastName: user.lastName,
-      firstName: user.firstName,
-      roles: user.roles,
-      profilePicture: user.profilePicture,
-      createdAt: user.createdAt,
-      _id: user._id,
-    };
-    return res.status(200).json({ data: userInfo });
-    //    return res.json({ message: "Login" });
+    compare(password, foundUser.password, async (err, isMatch) => {
+      console.log(isMatch);
+      if (isMatch) {
+        let userInfo = {
+          email: foundUser.email,
+          roles: foundUser.roles,
+          _id: foundUser._id,
+        };
+        const accessToken = jwt.sign(
+          userInfo,
+          process.env.ACCESS_TOKEN_SECRET,
+          {
+            expiresIn: "120s",
+          }
+        );
+        if (foundUser.refreshToken == "" || !foundUser.refreshToken) {
+          const refreshToken = jwt.sign(
+            userInfo,
+            process.env.REFRESH_TOKEN_SECRET,
+            {
+              expiresIn: "7d",
+            }
+          );
+          foundUser.refreshToken = refreshToken;
+          const user = await foundUser.save();
+          res.cookie("jwt", refreshToken, {
+            httpOnly: true,
+            maxAge: 72 * 60 * 60 * 1000,
+          });
+        }
+
+        return res.status(200).json({ accessToken });
+        //    return res.json({ message: "Login" });
+      } else {
+        return res.status(400).json({ message: "Wrong credentials" });
+      }
+    });
+
+    // console.log(await foundUser.isValidPassword(password));
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
 
@@ -42,7 +72,7 @@ const createUserView = async (req, res) => {
     }
     const duplicateEmail = await User.findOne({ email: email }).exec();
     if (duplicateEmail) {
-      return res.status(403).json({ message: "Email taken" });
+      return res.status(403).json({ message: "Email is taken" });
     }
     const result = await User.create({
       firstName: firstName,
@@ -50,7 +80,10 @@ const createUserView = async (req, res) => {
       email: email,
       password: password,
     });
-    res.status(201).json({ message: "created", data: result });
+    res.status(201).json({
+      message: "Your account has been created. Login first",
+      data: result,
+    });
   } catch (err) {
     console.log(err);
     res.status(401).json({ message: err.message });
@@ -58,22 +91,22 @@ const createUserView = async (req, res) => {
 };
 
 const updateUserView = async (req, res) => {
-  if (req.body.userId === req.params.id) {
+  if (req.user._id === req.params.id) {
     try {
-      let { firstName, lastName, password } = req.body;
+      let { firstName, lastName } = req.body;
       console.log(req.body);
 
       const updatedUser = await User.findByIdAndUpdate(
         req.params.id,
-        {
-          firstName: firstName,
-          lastName: lastName,
-        },
+        req.body,
         { new: true }
       );
 
-      !updatedUser && res.status(401).json({ message: "Bad request" });
-      res.status(201).json({ data: updatedUser });
+      !updatedUser &&
+        res.status(401).json({ message: "Something happened on our end" });
+      res
+        .status(201)
+        .json({ message: "Your account has been updates", data: updatedUser });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -83,20 +116,25 @@ const updateUserView = async (req, res) => {
 };
 
 const deleteUserView = async (req, res) => {
-  if (req.body.userId === req.params.id) {
+  if (req.user._id === req.params.id) {
     try {
       let { password } = req.body;
-      !password &&
-        res
+      if (!password)
+        return res
           .status(401)
           .json({ message: "Password is required to delete user" });
 
       const user = await User.findById(req.params.id);
-      const isValidPassword = user.isValidPassword(password);
-      !isValidPassword &&
-        res.status(403).json({ message: "Invalid credentials" });
-      await User.findByIdAndDelete(req.params.id);
-      res.status(201).json({ message: "User deleted sucessfully" });
+      if (!user) return res.sendStatus(403);
+      compare(password, user.password, async (err, isMatch) => {
+        if (isMatch) {
+          user.delete();
+          res.clearCookie("jwt", { httpOnly: true });
+          res.status(201).json({ message: "User deleted sucessfully" });
+        } else {
+          res.status(403).json({ message: "Invalid credentials" });
+        }
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -108,7 +146,7 @@ const deleteUserView = async (req, res) => {
 };
 
 const getUserView = async (req, res) => {
-  if (req.body.userId === req.params.id) {
+  if (req.user._id === req.params.id) {
     try {
       const user = await User.findById(req.params.id);
 
@@ -124,11 +162,50 @@ const getUserView = async (req, res) => {
       };
       res.status(201).json({ data: userInfo });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   } else {
     return res.status(401).json({ message: "Unauthorized" });
   }
+};
+
+const refreshTokenView = async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies || !cookies.jwt) return res.sendStatus(401);
+  console.log(cookies);
+
+  const refreshToken = cookies.jwt;
+
+  const foundUser = await User.findOne({ refreshToken }).exec();
+  if (!foundUser) return res.sendStatus(403);
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    if (err || foundUser.email !== decoded.email) return res.sendStatus(403);
+    const roles = Object.values(foundUser.roles);
+    const accessToken = jwt.sign(
+      {
+        email: decoded.email,
+        _id: decoded._id,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "50s" }
+    );
+    res.json({ accessToken });
+  });
+};
+
+const logoutView = async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies || !cookies.jwt) return res.sendStatus(401);
+  console.log(cookies);
+
+  const refreshToken = cookies.jwt;
+
+  const foundUser = await User.findOne({ refreshToken }).exec();
+  if (!foundUser) return res.sendStatus(403);
+  foundUser.refreshToken = "";
+  res.clearCookie("jwt", { httpOnly: true });
+  await foundUser.save();
+  return res.sendStatus(204);
 };
 //add your function to export
 export {
@@ -137,4 +214,6 @@ export {
   updateUserView,
   deleteUserView,
   getUserView,
+  refreshTokenView,
+  logoutView,
 };

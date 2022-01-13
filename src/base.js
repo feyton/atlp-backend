@@ -10,3 +10,16 @@ export const connectDB = async () => {
     console.error(err);
   }
 };
+
+import multer from "multer";
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "media");
+  },
+  filename: (req, file, cb) => {
+    console.log(req.body);
+    cb(null, req.body.name);
+  },
+});
+
+export const upload = multer({ storage: storage });

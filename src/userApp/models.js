@@ -49,24 +49,27 @@ const userSchema = new Schema(
   }
 );
 
-import { hash, compare } from "bcrypt";
+import bcrypt from "bcrypt";
 
 userSchema.pre("save", async function (next) {
   const user = this;
-  const hashedPassword = await hash(user.password, 10);
+  if (!user.isModified("password")) return next();
+  const hashedPassword = await bcrypt.hash(user.password, 10);
   user.password = hashedPassword;
   next();
 });
 
-userSchema.methods.isValidPassword = async function (password) {
-  const user = this;
-  const comparePassword = await compare(password, user.password);
-  return comparePassword;
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  await bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
+    if (err) return err;
+    return isMatch;
+  });
 };
-userSchema.pre("remove", function () {
+userSchema.pre("remove", function (next) {
   // To Do handle post deletion when user is deleted
   const user = this;
   // blogPost.deleteMany({author.id:user._id})
+  next();
 });
 //export your modules here
 const userModel = model("User", userSchema);
