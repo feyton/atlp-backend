@@ -4,8 +4,8 @@
 import * as models from "./models.js";
 
 const IndexView = (req, res) => {
-  return res.json({ message: "working" });
+  return res.redirect("/docs");
 };
 
 //add your function to export
-export {IndexView};
+export { IndexView };
