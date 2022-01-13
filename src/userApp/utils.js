@@ -1,5 +1,6 @@
 //Hanle all other utility functions here and import them into other files
 import jsonwebtoken from "jsonwebtoken";
+import validator from "validator";
 
 const jwt = jsonwebtoken;
 
@@ -39,4 +40,10 @@ const errorResponse = (error, message) => {
   return res;
 };
 
-export { userAppUtil, verifyJWT, errorResponse };
+const validateSignUpData = (req, res, next) => {
+  const { firstName, lastName, email, password } = req.body;
+  const isEmailValid = validator.isEmail(email);
+  !isEmailValid ? res.sendStatus(400) : next();
+};
+
+export { userAppUtil, verifyJWT, errorResponse, validateSignUpData };

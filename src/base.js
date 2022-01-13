@@ -22,4 +22,45 @@ const storage = multer.diskStorage({
   },
 });
 
+export const optionsToCustomizeSwagger = {
+  customCssUrl: "/swagger.css",
+  customSiteTitle: "ATLP DOCS",
+  customfavIcon:
+    "https://feyton.github.io/atpl_capstone_fabrice/assets/favicon.png",
+};
+
+export const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "ATLP Project Docs",
+      version: "1.0.0",
+      description: "The Documentation for ATLP Capstone Project",
+      license: {
+        name: "ISC",
+        url: "https://opensource.org/licenses/ISC",
+      },
+      contact: {
+        name: "Fabrice Hafashimana",
+        url: "https://feyton.co.rw",
+      },
+    },
+    servers: [
+      {
+        url: "http://127.0.0.1:3500",
+        description: "Development server",
+      },
+      {
+        url: "https://atlp-fabrice.herokuapp.com/",
+        description: "The production server",
+      },
+    ],
+  },
+  apis: ["src/blogApp/routes.js", "src/userApp/routes.js"],
+};
+
+// export const swaggerOptions = {
+//   swaggerDefinition,
+// };
+
 export const upload = multer({ storage: storage });

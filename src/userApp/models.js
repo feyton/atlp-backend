@@ -4,7 +4,7 @@
 import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 import validator from "validator";
-const { isEmail } = validator;
+const { isEmail } = validator; //todo remove the model validation and move it in the routes
 
 //define your models here
 const userSchema = new Schema(
@@ -23,7 +23,6 @@ const userSchema = new Schema(
       lowercase: true,
       unique: true,
       required: "Email address is required",
-      validate: [isEmail, "invalid email"],
     },
     roles: {
       User: {
@@ -60,10 +59,14 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  await bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
-    if (err) return err;
-    return isMatch;
-  });
+  await bcrypt.compare(
+    candidatePassword,
+    this.password,
+    function (err, isMatch) {
+      if (err) return err;
+      return isMatch;
+    }
+  );
 };
 userSchema.pre("remove", function (next) {
   // To Do handle post deletion when user is deleted
