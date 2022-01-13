@@ -66,20 +66,7 @@ const loginView = async (req, res) => {
 
 const createUserView = async (req, res) => {
   try {
-    let { firstName, lastName, email, password } = req.body;
-    if (!firstName || !lastName || !email || !password) {
-      return res.status(403).json({ message: "Bad request" });
-    }
-    const duplicateEmail = await User.findOne({ email: email }).exec();
-    if (duplicateEmail) {
-      return res.status(403).json({ message: "Email is taken" });
-    }
-    const result = await User.create({
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      password: password,
-    });
+    const result = await User.create(req.newUser);
     res.status(201).json({
       message: "Your account has been created. Login first",
       data: result,

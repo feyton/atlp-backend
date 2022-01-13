@@ -1,5 +1,6 @@
 //Hanle all other utility functions here and import them into other files
 import jsonwebtoken from "jsonwebtoken";
+import validator from "validator";
 
 const jwt = jsonwebtoken;
 
@@ -39,4 +40,6 @@ const errorResponse = (error, message) => {
   return res;
 };
 
-export { userAppUtil, verifyJWT, errorResponse };
+
+
+export { userAppUtil, verifyJWT, errorResponse,  };
