@@ -56,7 +56,7 @@ export const swaggerOptions = {
       },
     ],
   },
-  apis: ["src/blogApp/routes.js", "src/userApp/routes.js"],
+  apis: ["src/blogApp/routes.js", "src/userApp/routes.js", "src/indexApp/routes.js"],
 };
 
 // export const swaggerOptions = {

@@ -40,10 +40,6 @@ const errorResponse = (error, message) => {
   return res;
 };
 
-const validateSignUpData = (req, res, next) => {
-  const { firstName, lastName, email, password } = req.body;
-  const isEmailValid = validator.isEmail(email);
-  !isEmailValid ? res.sendStatus(400) : next();
-};
 
-export { userAppUtil, verifyJWT, errorResponse, validateSignUpData };
+
+export { userAppUtil, verifyJWT, errorResponse,  };

@@ -52,12 +52,12 @@ const updateBlogView = async (req, res) => {
       );
 
       //   !updatedUser && res.status(401).json({ message: "Bad request" });
-      res.status(201).json({ data: updatedBlog });
+      res.status(200).json({ data: updatedBlog });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   } else {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(400).json({ message: "Unauthorized" });
   }
 };
 
@@ -70,13 +70,13 @@ const deleteBlogView = async (req, res) => {
 
       await blog.delete();
 
-      res.status(201).json({ message: "Blog post deleted sucessfully" });
+      res.status(200).json({ message: "Blog post deleted sucessfully" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(401).json({ message: error.message });
     }
   } else {
     return res
-      .status(401)
+      .status(403)
       .json({ message: "You can only delete existing blogs" });
   }
 };
@@ -86,25 +86,23 @@ const getBlogDetailView = async (req, res) => {
     try {
       const blog = await Blog.findById(req.params.id);
 
-      !blog && res.status(401).json({ message: "Bad request" });
-
-      res.status(201).json({ data: blog });
+      res.status(200).json({ data: blog });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.sendStatus(404);
     }
   } else {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(400).json({ message: "Unauthorized" });
   }
 };
 
 const getBlogsView = async (req, res) => {
-  const postAuthor = req.query.user;
-  const cat = req.query.cat;
   let posts;
   // ? postAuthor: posts =
 
   posts = await Blog.find({ published: true });
-  res.status(200).json({ data: posts });
+  posts.length == 0
+    ? res.sendStatus(201)
+    : res.status(200).json({ data: posts });
 };
 
 // Category Views
