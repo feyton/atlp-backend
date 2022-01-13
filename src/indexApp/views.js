@@ -5,6 +5,7 @@ import * as models from "./models.js";
 
 const IndexView = (req, res) => {
   return res.redirect("/docs");
+
 };
 
 //add your function to export

@@ -25,6 +25,7 @@ const router = Router();
  * /:
  *  get:
  *      summary: Test if the api is working by accessing home
+ *      description: to access the docs head <a href="/docs">here</a>
  *      tags:
  *          - Index
  */
@@ -32,14 +33,6 @@ router.get("/", views.IndexView);
 router.use("/account", UserRouter);
 router.use("/blog", BlogRouter);
 
-/**
- * @openapi
- * /:
- *  post:
- *      summary: Test if the api is working by accessing home
- *      tags:
- *          - Index
- */
 router.post("/app/upload", upload.single("file"), (req, res) => {
   res.status(200).json({ message: "File uploaded successfully" });
 });
