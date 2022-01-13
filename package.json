@@ -4,7 +4,7 @@
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./src/test",
+    "test": "mocha ./src/test/ --recursive --timeout 30000",
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
