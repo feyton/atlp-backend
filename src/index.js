@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 dotenv.config();
 import express, { static as staticExpress } from "express";
 import mongoose from "mongoose";
-// import bodyparser from "body-parser";
 import cookieParser from "cookie-parser";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -34,3 +33,5 @@ mongoose.connection.once("open", () => {
     console.log("Server started: ", PORT);
   });
 });
+
+export { app };
