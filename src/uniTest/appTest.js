@@ -16,7 +16,7 @@ describe("User unit testing", () => {
     });
     it("Should return true", (done) => {
       let user = {
-        email: "fabrice@me.com",
+        email: "fabriceme.com",
         password: "12335",
       };
       const invalidLogin = validateEmail(user.email);
