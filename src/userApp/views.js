@@ -10,52 +10,34 @@ const User = models.userModel;
 
 const loginView = async (req, res) => {
   try {
-    let { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(403).json({ message: "Bad request" });
-    }
-    let foundUser = await User.findOne({ email: email }).exec();
-    if (!foundUser) {
-      return res.status(400).json({ message: "Wrong credentials" });
-    }
+    let foundUser = req.foundUser;
 
-    compare(password, foundUser.password, async (err, isMatch) => {
-      console.log(isMatch);
-      if (isMatch) {
-        let userInfo = {
-          email: foundUser.email,
-          roles: foundUser.roles,
-          _id: foundUser._id,
-        };
-        const accessToken = jwt.sign(
-          userInfo,
-          process.env.ACCESS_TOKEN_SECRET,
-          {
-            expiresIn: "120s",
-          }
-        );
-        if (foundUser.refreshToken == "" || !foundUser.refreshToken) {
-          const refreshToken = jwt.sign(
-            userInfo,
-            process.env.REFRESH_TOKEN_SECRET,
-            {
-              expiresIn: "7d",
-            }
-          );
-          foundUser.refreshToken = refreshToken;
-          const user = await foundUser.save();
-          res.cookie("jwt", refreshToken, {
-            httpOnly: true,
-            maxAge: 72 * 60 * 60 * 1000,
-          });
-        }
-
-        return res.status(200).json({ accessToken });
-        //    return res.json({ message: "Login" });
-      } else {
-        return res.status(400).json({ message: "Wrong credentials" });
-      }
+    let userInfo = {
+      email: foundUser.email,
+      roles: foundUser.roles,
+      _id: foundUser._id,
+    };
+    const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: "120s",
     });
+    if (foundUser.refreshToken == "" || !foundUser.refreshToken) {
+      const refreshToken = jwt.sign(
+        userInfo,
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+      foundUser.refreshToken = refreshToken;
+      const user = await foundUser.save();
+      res.cookie("jwt", refreshToken, {
+        httpOnly: true,
+        maxAge: 72 * 60 * 60 * 1000,
+      });
+    }
+
+    return res.status(200).json({ accessToken });
+    //    return res.json({ message: "Login" });
 
     // console.log(await foundUser.isValidPassword(password));
   } catch (err) {
@@ -66,27 +48,14 @@ const loginView = async (req, res) => {
 
 const createUserView = async (req, res) => {
   try {
-    let { firstName, lastName, email, password } = req.body;
-    if (!firstName || !lastName || !email || !password) {
-      return res.status(403).json({ message: "Bad request" });
-    }
-    const duplicateEmail = await User.findOne({ email: email }).exec();
-    if (duplicateEmail) {
-      return res.status(403).json({ message: "Email is taken" });
-    }
-    const result = await User.create({
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      password: password,
-    });
+    const result = await User.create(req.newUser);
     res.status(201).json({
       message: "Your account has been created. Login first",
       data: result,
     });
   } catch (err) {
     console.log(err);
-    res.status(401).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 

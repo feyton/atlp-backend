@@ -3,11 +3,49 @@
 import { Router } from "express";
 import * as views from "./views.js";
 
+import { upload } from "../base.js";
+
+import { router as UserRouter } from "../userApp/routes.js";
+import { router as BlogRouter } from "../blogApp/routes.js";
+
+import { refreshTokenView } from "../userApp/views.js";
+
 const router = Router();
 
 //write your routes here
+/**
+ * @openapi
+ * tags:
+ *  name: Index
+ *  description: Routes for the user App
+ */
 
+/**
+ * @openapi
+ * /:
+ *  get:
+ *      summary: Test if the api is working by accessing home
+ *      description: to access the docs head <a href="/docs">here</a>
+ *      tags:
+ *          - Index
+ */
 router.get("/", views.IndexView);
+router.use("/account", UserRouter);
+router.use("/blog", BlogRouter);
+
+router.post("/app/upload", upload.single("file"), (req, res) => {
+  res.status(200).json({ message: "File uploaded successfully" });
+});
+
+/**
+ * @openapi
+ * /:
+ *  get:
+ *      summary: Refresh a user token
+ *      tags:
+ *          - Index
+ */
+router.get("/refresh", refreshTokenView);
 
 //Keep this line at the bottom
 
