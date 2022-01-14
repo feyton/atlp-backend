@@ -97,4 +97,4 @@ const commentModel = model("Comment", commentSchema);
 
 // const blogComment = new Schema({});
 //export your modules here
-export { blogModel, categoryModel };
+export { blogModel, categoryModel, commentModel };
