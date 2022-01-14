@@ -63,8 +63,4 @@ export const swaggerOptions = {
   ],
 };
 
-// export const swaggerOptions = {
-//   swaggerDefinition,
-// };
-
 export const upload = multer({ storage: storage });
