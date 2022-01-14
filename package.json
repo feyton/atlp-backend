@@ -9,7 +9,8 @@
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "createApp": "python ./main.py"
+    "createApp": "python ./main.py",
+    "uniTest": "mocha ./src/uniTest/ --recursive"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "cors": "^2.8.5",
     "dotenv": "^11.0.0",
     "express": "^4.17.2",
+    "express-validator": "^6.14.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.1.6",
     "multer": "^1.4.4",

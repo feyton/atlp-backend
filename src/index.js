@@ -12,6 +12,7 @@ const __dirname = path.resolve();
 import { optionsToCustomizeSwagger, swaggerOptions } from "./base.js";
 import { connectDB } from "./base.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
+import { IndexView } from "./indexApp/views.js";
 
 const app = express();
 app.use(cors());
@@ -26,13 +27,14 @@ app.use(
 );
 
 connectDB();
-
-app.use("/", IndexRouter);
+const apiRoute = process.env.API_BASE || "/api/v1/";
+app.use(apiRoute, IndexRouter);
+app.get("/", IndexView);
 
 const PORT = process.env.PORT || 3500;
 mongoose.connection.once("open", () => {
   console.log("Mongoose connected");
   app.listen(PORT, () => {
-    console.log("Server started: ", PORT);
+    console.log("Server started: ", PORT, apiRoute);
   });
 });

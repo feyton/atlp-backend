@@ -1,9 +1,8 @@
 import validator from "validator";
 const { isEmail } = validator;
 import * as models from "./models.js";
-import jsonwebtoken from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { hash, compare } from "bcrypt";
-const jwt = jsonwebtoken;
 const User = models.userModel;
 
 export const validateSignUpData = async (req, res, next) => {
@@ -27,6 +26,10 @@ export const validateSignUpData = async (req, res, next) => {
   };
   req.newUser = user;
   next();
+};
+
+export const validateEmail = (email) => {
+  return isEmail(email);
 };
 
 export const validateLogin = async (req, res, next) => {

@@ -29,11 +29,10 @@ const router = Router();
  *      tags:
  *          - Index
  */
-router.get("/", views.IndexView);
-router.use("/account", UserRouter);
-router.use("/blog", BlogRouter);
+router.use("/accounts", UserRouter);
+router.use("/blogs", BlogRouter);
 
-router.post("/app/upload", upload.single("file"), (req, res) => {
+router.post("/uploads", upload.single("file"), (req, res) => {
   res.status(200).json({ message: "File uploaded successfully" });
 });
 
