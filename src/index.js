@@ -7,12 +7,14 @@ import cookieParser from "cookie-parser";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import path, { join } from "path";
+import cors from "cors";
 const __dirname = path.resolve();
 import { optionsToCustomizeSwagger, swaggerOptions } from "./base.js";
 import { connectDB } from "./base.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(staticExpress(join(__dirname, "public")));
