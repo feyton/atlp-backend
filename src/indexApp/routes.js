@@ -1,13 +1,9 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
-import * as views from "./views.js";
-
 import { upload } from "../base.js";
-
-import { router as UserRouter } from "../userApp/routes.js";
 import { router as BlogRouter } from "../blogApp/routes.js";
-
+import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
 
 const router = Router();
@@ -20,15 +16,6 @@ const router = Router();
  *  description: Routes for the user App
  */
 
-/**
- * @openapi
- * /:
- *  get:
- *      summary: Test if the api is working by accessing home
- *      description: to access the docs head <a href="/docs">here</a>
- *      tags:
- *          - Index
- */
 router.use("/accounts", UserRouter);
 router.use("/blogs", BlogRouter);
 
@@ -38,7 +25,7 @@ router.post("/uploads", upload.single("file"), (req, res) => {
 
 /**
  * @openapi
- * /:
+ * /api/v1/refresh:
  *  get:
  *      summary: Refresh a user token
  *      tags:

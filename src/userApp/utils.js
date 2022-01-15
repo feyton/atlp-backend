@@ -1,21 +1,28 @@
-//Hanle all other utility functions here and import them into other files
-import jsonwebtoken from "jsonwebtoken";
-import validator from "validator";
-// const { body, validationResult } = require("express-validator");
-const jwt = jsonwebtoken;
+import jwt from "jsonwebtoken";
+import { serverError } from "../blogApp/errorHandlers.js";
 
-const userAppUtil = () => {};
 
 const verifyJWT = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const cookies = req.cookies;
-  if (!authHeader && !cookies.jwt) return res.sendStatus(401);
+  if (!authHeader && !cookies.jwt)
+    return res.status(400).json({
+      status: "fail",
+      code: 400,
+      data: {
+        parameter: "Authorization header required or a valid cookie",
+      },
+    });
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     if (token) {
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-          return res.sendStatus(403);
+        if (err && !cookies.jwt) {
+          return res.status(403).json({
+            status: "fail",
+            code: 403,
+            message: "invalid/Expired token was received",
+          });
         }
         req.user = decoded;
         next();
@@ -25,30 +32,18 @@ const verifyJWT = (req, res, next) => {
     const jwtCookie = cookies.jwt;
     jwt.verify(jwtCookie, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
       if (err) {
-        return res.sendStatus(403);
+        return res.status(403).json({
+          status: "fail",
+          code: 403,
+          message: "invalid/Expired token was received",
+        });
       }
       req.user = decoded;
       next();
     });
   } else {
-    return res.sendStatus(401);
+    return serverError(res);
   }
 };
 
-const errorResponse = (error, message) => {
-  const res = { code: error.code, message: message, error: error };
-  return res;
-};
-
-export const validateData = (data) => {
-  let response = {};
-  (password) => {
-    if (!password.length > 6) {
-      response["password"] = "Must be at least 6 characters";
-    }
-  };
-
-  return response;
-};
-
-export { userAppUtil, verifyJWT, errorResponse };
+export { verifyJWT };

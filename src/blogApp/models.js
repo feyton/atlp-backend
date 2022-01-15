@@ -2,7 +2,6 @@
 // link on database
 
 import mongoose from "mongoose";
-import { userModel } from "../userApp/models.js";
 const { Schema, model } = mongoose;
 
 //define your models here
@@ -87,7 +86,6 @@ blogSchema.pre("save", function (next) {
 
 blogSchema.methods.isAuthor = async function (author) {
   const blog = this;
-  console.log(blog.author == author);
   return (await blog.author) == author;
 };
 

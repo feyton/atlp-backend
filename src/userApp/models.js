@@ -1,10 +1,10 @@
 //The models file is used to define the models that will be used to
 // link on database
 
+import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { blogModel } from "../blogApp/models.js";
 const { Schema, model } = mongoose;
-import validator from "validator";
-const { isEmail } = validator; //todo remove the model validation and move it in the routes
 
 //define your models here
 const userSchema = new Schema(
@@ -48,8 +48,6 @@ const userSchema = new Schema(
   }
 );
 
-import bcrypt from "bcrypt";
-
 userSchema.pre("save", async function (next) {
   const user = this;
   if (!user.isModified("password")) return next();
@@ -58,20 +56,13 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  await bcrypt.compare(
-    candidatePassword,
-    this.password,
-    function (err, isMatch) {
-      if (err) return err;
-      return isMatch;
-    }
-  );
+userSchema.methods.comparePassword = async function (userPassword) {
+  return await bcrypt.compare(userPassword, this.password);
 };
-userSchema.pre("remove", function (next) {
+userSchema.pre("remove", async function (next) {
   // To Do handle post deletion when user is deleted
   const user = this;
-  // blogPost.deleteMany({author.id:user._id})
+  await blogModel.deleteMany({ author: user._id });
   next();
 });
 //export your modules here

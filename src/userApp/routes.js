@@ -1,8 +1,13 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
+import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
-import { validateSignUpData, validateLogin } from "./middleware.js";
+import {
+  userSignupValidationRules,
+  userValidationRules,
+  validate,
+} from "./validator.js";
 import * as views from "./views.js";
 
 const router = Router();
@@ -77,7 +82,7 @@ const router = Router();
 /**
  * @swagger
  * path:
- * /account/login:
+ * /api/v1/accounts/login:
  *   post:
  *     summary: Allow a user to login using email and password
  *     description: A valid email and password is required to a
@@ -101,11 +106,12 @@ const router = Router();
  *              description: Wrong credentials were received. Check your email or password.
  *
  */
-router.post("/login", validateLogin, views.loginView);
+router.post("/login", userValidationRules(), validate, validateLogin);
+
 
 /**
  * @swagger
- * /account/signup:
+ * /api/v1/account/signup:
  *   post:
  *     summary: Allow a user to register in the application
  *     description: Expecting JSON formatted data in request body
@@ -136,11 +142,16 @@ router.post("/login", validateLogin, views.loginView);
 
  */
 
-router.post("/signup", validateSignUpData, views.createUserView);
+router.post(
+  "/signup",
+  userSignupValidationRules(),
+  validate,
+  views.createUserView
+);
 
 /**
  * @swagger
- * /account/profile/{id}:
+ * /api/v1/account/profile/{id}:
  *   put:
  *     summary: Update an individual User.
  *     description: Find and update the currently authenticated user with a valid token.
@@ -166,11 +177,11 @@ router.post("/signup", validateSignUpData, views.createUserView);
  *       401:
  *           description: Missing a valid token to confirm access
  */
-router.put("/profile/:id", verifyJWT, views.updateUserView);
+router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
 
 /**
  * @swagger
- * /account/profile/{id}:
+ * /api/v1/account/profile/{id}:
  *   get:
  *     summary: Retrieve a single JSONPlaceholder user.
  *     description: Retrieve a single JSONPlaceholder user. Can be used to populate a user profile when prototyping or testing an API.
@@ -195,11 +206,11 @@ router.put("/profile/:id", verifyJWT, views.updateUserView);
  *           description: Missing a valid token to confirm access
  */
 
-router.get("/profile/:id", verifyJWT, views.getUserView);
+router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
 
 /**
  * @swagger
- * /account/{id}:
+ * /api/v1/account/{id}:
  *   delete:
  *     summary: Delete a user specified in the id.
  *     description: Retrieve a single JSONPlaceholder user. Can be used to populate a user profile when prototyping or testing an API.
@@ -225,12 +236,12 @@ router.get("/profile/:id", verifyJWT, views.getUserView);
  *       401:
  *           description: Missing a valid token to confirm access
  */
-router.delete("/:id", verifyJWT, views.deleteUserView);
+router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
 
 /**
  * @swagger
  * path:
- * /account/logout:
+ * /api/v1/account/logout:
  *   post:
  *     summary: Allow a user to logout
  *     description: A valid token is required to process request

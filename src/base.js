@@ -1,17 +1,25 @@
 import mongoose from "mongoose";
+import multer from "multer";
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_DB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    if (process.env.NODE_ENV == "test") {
+      console.log("Testing on test database");
+      mongoose.connect(process.env.MONGO_DB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    } else {
+      mongoose.connect(process.env.MONGO_DB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    }
   } catch (err) {
     console.error(err);
   }
 };
 
-import multer from "multer";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "media");

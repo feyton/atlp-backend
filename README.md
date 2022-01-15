@@ -4,6 +4,18 @@ The backend code for the ATLP Project.
 # General description
 
 
+# Responses:
+Expect the following response structures:
+code        Response structure
+2xx         {status: success, code: 2xx, data: {objectKey: Value}}
+400         {status: fail, code: 4xx, data}
+401         {status: fail, code: 4xx, message: string}
+403         {status: fail, code: 4xx, message: string}
+406         {status: fail, code: 4xx, data: {key:value}}
+409         {status: fail, code: 4xx, data: {key:value}}
+4xx        {status: fail, code: 4xx, message: string}
+5xx         {status: error, code: 5xx, message: string}
+
 # Servers
 
 The API is hosted on Heroku on different pipelines.

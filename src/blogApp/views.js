@@ -2,6 +2,15 @@
 //Equivalent to middleware. Create functions that process request here
 //Remember to import all in routes
 
+import { userModel } from "../userApp/models.js";
+import {
+  dbError,
+  forbidenAccess,
+  resourceNotFound,
+  serverError,
+  successResponse,
+  successResponseNoData,
+} from "./errorHandlers.js";
 import * as models from "./models.js";
 const Blog = models.blogModel;
 const Category = models.categoryModel;
@@ -9,119 +18,118 @@ const Category = models.categoryModel;
 const createBlogView = async (req, res) => {
   try {
     //
-    let { title, content, summary } = req.body;
-    if (!title || !content || !summary) {
-      return res.status(403).json({ message: "Missing important data" });
-    }
-    const duplicateTitle = await Blog.findOne({ title: title }).exec();
-    if (duplicateTitle) {
-      return res.status(403).json({ message: "Title already exist" });
-    }
-    const author = req.user;
-    console.log(author);
-    const result = await Blog.create({
-      title: title,
-      content: content,
-      summary: summary,
-      author: author._id,
+    let newBlog = req.body;
+    newBlog["author"] = req.user._id;
+    console.log(newBlog);
+
+    const result = await Blog.create(newBlog);
+    if (!result) return dbError(res);
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      data: result,
     });
-    console.log(result.populate("author"));
-    res.status(201).json({ message: "created", data: result });
   } catch (err) {
     console.log(err);
-    res.status(401).json({ message: err.message });
+    return serverError(res);
   }
 };
 
 const updateBlogView = async (req, res) => {
-  // ToDo link post to users using the userId
-  if (req.params.id) {
-    try {
-      let { title, summary, content } = req.body;
-      const author = req.user;
-      const blogPost = await Blog.findOne(req.params.id);
-      !blogPost.isAuthor(author) && res.sendStatus(403);
+  try {
+    const author = req.user;
+    const blogPost = await Blog.findById(req.params.id);
+    if (!blogPost) return resourceNotFound(res);
+    const isAuthor = await blogPost.isAuthor(author._id);
+    if (!isAuthor && author.roles.Admin == "") return forbidenAccess(res);
 
-      const updatedBlog = await blogPost.update(
+    try {
+      const updatedBlog = await Blog.findByIdAndUpdate(
+        req.params.id,
+        req.body,
         {
-          title: title,
-          content: content,
-          summary: summary,
-        },
-        { new: true }
+          new: true,
+        }
       );
 
-      //   !updatedUser && res.status(401).json({ message: "Bad request" });
-      res.status(200).json({ data: updatedBlog });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+      const newData = await Blog.populate(updatedBlog, {
+        path: "author",
+        model: "User",
+        select: ["_id", "firstName", "lastName", "profilePicture"],
+      });
+
+      return successResponse(res, newData);
+    } catch (err) {
+      if (err.code == 11000) {
+        return res.status(409).json({
+          status: "fail",
+          code: 409,
+          data: {
+            title: "This title already exists with a different id",
+          },
+        });
+      }
+      return serverError(res);
     }
-  } else {
-    return res.status(400).json({ message: "Unauthorized" });
+  } catch (error) {
+    console.log(error);
+    return serverError(res);
   }
 };
 
 const deleteBlogView = async (req, res) => {
-  if (req.params.id) {
-    try {
-      const user = req.user;
-      const blog = await Blog.findById(req.params.id);
-      if (!blog.author == user._id) return res.sendStatus(402);
+  try {
+    const user = req.user;
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return resourceNotFound(res);
+    if (!blog.author == user._id && user.roles.Admin == "")
+      return forbidenAccess(res);
 
-      await blog.delete();
+    await blog.delete();
 
-      res.status(200).json({ message: "Blog post deleted sucessfully" });
-    } catch (error) {
-      res.status(401).json({ message: error.message });
-    }
-  } else {
-    return res
-      .status(403)
-      .json({ message: "You can only delete existing blogs" });
+    return successResponseNoData(res);
+  } catch (error) {
+    return serverError(res);
   }
 };
 
 const getBlogDetailView = async (req, res) => {
-  if (req.params.id) {
-    try {
-      const blog = await Blog.findById(req.params.id);
+  try {
+    const blog = await Blog.findById(req.params.id).populate("author", [
+      "_id",
+      "firstName",
+      "lastName",
+      "profilePicture",
+    ]);
+    if (!blog) return resourceNotFound(res);
+    if (!blog.published && !req.user) return forbidenAccess(res);
 
-      res.status(200).json({ data: blog });
-    } catch (error) {
-      res.sendStatus(404);
-    }
-  } else {
-    return res.status(400).json({ message: "Unauthorized" });
+    return successResponse(res, blog);
+  } catch (error) {
+    console.log(error);
+    return dbError(res);
   }
 };
 
 const getBlogsView = async (req, res) => {
   let posts;
-  // ? postAuthor: posts =
 
-  posts = await Blog.find({ published: true });
-  return res.json(posts);
+  posts = await Blog.find({ published: true }).populate("author", [
+    "firstName",
+    "lastName",
+    "profilePicture",
+    "_id",
+  ]);
+  return successResponse(res, posts);
 };
 
 // Category Views
 const createCategoryView = async (req, res) => {
   try {
-    let { title, description } = req.body;
-    if (!title || !description) {
-      return res.status(403).json({ message: "Missing important data" });
-    }
-    const duplicateTitle = await Category.findOne({ title: title }).exec();
-    if (duplicateTitle) {
-      return res.status(403).json({ message: "Title already exist" });
-    }
-    const result = await Category.create({
-      title: title,
-      desc: description,
-    });
-    res.status(201).json({ message: "created", data: result });
+    const result = await Category.create(red.body);
+    return successResponse(res, result);
   } catch (err) {
-    console.log(err);
-    res.status(401).json({ message: err.message });
+    return dbError(res);
   }
 };
 

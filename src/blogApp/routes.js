@@ -1,8 +1,15 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
-import * as views from "./views.js";
+import { checkObjectId } from "../userApp/middleware.js";
 import { verifyJWT } from "../userApp/utils.js";
+import { validate } from "../userApp/validator.js";
+import {
+  blogCreateValidationRules,
+  blogUpdateValidationRules,
+  createCategoryValidationRules,
+} from "./validator.js";
+import * as views from "./views.js";
 const router = Router();
 
 //write your routes here
@@ -72,7 +79,7 @@ const router = Router();
 
 /**
  * @openapi
- * /blog:
+ * /api/v1/blogs:
  *   get:
  *     summary: Return a list of all blogs that are published
  *     description: Expected to return an array of posts objects
@@ -90,7 +97,7 @@ const router = Router();
 router.get("/", views.getBlogsView);
 /**
  * @openapi
- * /cat:
+ * /api/v1/blogs/cat:
  *   post:
  *     summary: Allow a user to create a new category
  *     description: Authenticated user can create a blog category
@@ -115,10 +122,17 @@ router.get("/", views.getBlogsView);
  *       401:
  *           description: Missing a valid token to confirm access
  */
-router.post("/cat", verifyJWT, views.createCategoryView);
+
+router.post(
+  "/cat",
+  verifyJWT,
+  createCategoryValidationRules(),
+  validate,
+  views.createCategoryView
+);
 /**
  * @openapi
- * /blog/:
+ * /api/v1/blogs/:
  *   post:
  *     summary: Allow a user to create a new blog post
  *     description: Authenticated user can create a blog post
@@ -145,10 +159,17 @@ router.post("/cat", verifyJWT, views.createCategoryView);
  *       409:
  *           description: Title already exists and there is conflict
  */
-router.post("/", verifyJWT, views.createBlogView); //todo add validation before verification
+router.post(
+  "/",
+  verifyJWT,
+  blogCreateValidationRules(),
+  validate,
+  views.createBlogView
+);
+
 /**
  * @openapi
- * /blog/{id}:
+ * /api/v1/blogs/{id}:
  *   get:
  *     summary: Allow a user to get a specific blog post
  *     description: Expect a response with a JSON object
@@ -172,44 +193,11 @@ router.post("/", verifyJWT, views.createBlogView); //todo add validation before 
  *         500:
  *           description: Something terribly happened to our end
  */
-router.get("/:id", views.getBlogDetailView);
-/**
- * @openapi
- * /blog/{id}:
- *   delete:
- *     summary: Allow a user to delete a specific blog
- *     description: This require to be authenticated and be an owner of blog
- *     tags:
- *         - Blog
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: A valid mongodb blog id.
- *         schema:
- *           $ref: "#components/Blog"
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
- *     responses:
- *         200:
- *             description: A blog post is deleted
- *         404:
- *             description: A blog post does not exist
- *         400:
- *             description: Missing the id in path
- *         401:
- *             description: Missing a valid token
+router.get("/:id", checkObjectId, views.getBlogDetailView);
 
- */
-router.delete("/:id", verifyJWT, views.deleteBlogView);
 /**
  * @openapi
- * /blog/{id}:
+ * /api/v1/blogs/{id}:
  *   put:
  *     summary: Allow a user to update a specific blogpost
  *     description: This require to be authenticated
@@ -241,7 +229,81 @@ router.delete("/:id", verifyJWT, views.deleteBlogView);
  *         403:
  *             description: The blog author is diffrent from the authenticated user
  */
-router.put("/:id", verifyJWT, views.updateBlogView);
+router.put(
+  "/:id",
+  verifyJWT,
+  checkObjectId,
+  blogUpdateValidationRules(),
+  validate,
+  views.updateBlogView
+);
+
+/**
+ * @openapi
+ * /api/v1/blogs/{id}:
+ *   delete:
+ *     summary: Allow a user to delete a specific blog
+ *     description: This require to be authenticated and be an owner of blog
+ *     tags:
+ *         - Blog
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: A valid mongodb blog id.
+ *         schema:
+ *           $ref: "#components/Blog"
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         description: A token given to a user when they login. Copy and paste here
+ *         schema:
+ *           type: string
+ *           format: token
+ *     responses:
+ *         200:
+ *             description: A blog post is deleted
+ *             content:
+ *                 application/json:
+ *                     schema:
+ *                         type: object
+ *                         properties:
+ *                             status: string
+ *                             code: int
+ *                             data: null
+ *         404:
+ *             description: A blog post does not exist
+ *             content:
+ *                 application/json:
+ *                     schema:
+ *                         type: object
+ *                         properties:
+ *                             status: string
+ *                             code: int
+ *                             message: string
+ *         400:
+ *             description: Missing the id in path
+ *             content:
+ *                 application/json:
+ *                     schema:
+ *                         type: object
+ *                         properties:
+ *                             status: string
+ *                             code: int
+ *                             message: string
+ *         401:
+ *             description: Missing a valid token
+ *             content:
+ *                 application/json:
+ *                     schema:
+ *                         type: object
+ *                         properties:
+ *                             status: string
+ *                             code: int
+ *                             message: string
+
+ */
+router.delete("/:id", verifyJWT, checkObjectId, views.deleteBlogView);
 
 //Keep this line at the bottom
 
