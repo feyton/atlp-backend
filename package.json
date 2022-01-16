@@ -9,7 +9,7 @@
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "createApp": "python ./main.py"
+    "createApp": "node ./createApp.js"
   },
   "repository": {
     "type": "git",
@@ -49,6 +49,7 @@
     "@babel/preset-env": "^7.16.8",
     "chai": "^4.3.4",
     "mocha": "^9.1.3",
+    "node-emoji": "^1.11.0",
     "nodemon": "^2.0.15"
   }
 }
