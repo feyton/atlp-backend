@@ -9,8 +9,7 @@
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "createApp": "python ./main.py",
-    "uniTest": "mocha ./src/uniTest/ --recursive"
+    "createApp": "node ./createApp.js"
   },
   "repository": {
     "type": "git",
@@ -54,6 +53,7 @@
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
     "mocha": "^9.1.3",
+    "node-emoji": "^1.11.0",
     "nodemon": "^2.0.15"
   }
 }
