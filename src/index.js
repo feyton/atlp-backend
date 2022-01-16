@@ -2,17 +2,18 @@ import dotenv from "dotenv";
 dotenv.config();
 import express, { static as staticExpress } from "express";
 import mongoose from "mongoose";
-// import bodyparser from "body-parser";
 import cookieParser from "cookie-parser";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import path, { join } from "path";
+import cors from "cors";
 const __dirname = path.resolve();
 import { optionsToCustomizeSwagger, swaggerOptions } from "./base.js";
 import { connectDB } from "./base.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(staticExpress(join(__dirname, "public")));
@@ -34,3 +35,5 @@ mongoose.connection.once("open", () => {
     console.log("Server started: ", PORT);
   });
 });
+
+export { app };

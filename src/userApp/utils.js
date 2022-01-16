@@ -40,6 +40,4 @@ const errorResponse = (error, message) => {
   return res;
 };
 
-
-
-export { userAppUtil, verifyJWT, errorResponse,  };
+export { userAppUtil, verifyJWT, errorResponse };
