@@ -3,50 +3,47 @@
 //Remember to import all in routes
 
 import { compare } from "bcrypt";
+import dotenv from "dotenv";
+dotenv.config();
 import jwt from "jsonwebtoken";
 import {
-  dbError,
+  badRequestResponse,
   forbidenAccess,
   serverError,
   successResponse,
 } from "../blogApp/errorHandlers.js";
 import * as models from "./models.js";
+import { RefreshToken } from "../config/models.js";
 const User = models.userModel;
+let tokenExpiration = process.env.JWT_EXPIRATION;
 
 const loginView = async (req, res) => {
   try {
-    let user = await User.findById(req.foundUser._id);
+    let user = await User.findOne({ email: req.body.email }).exec();
+
     let userInfo = {
       email: user.email,
       roles: user.roles,
       _id: user._id,
     };
+    console.log(tokenExpiration);
 
     const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "120s",
+      expiresIn: parseInt(tokenExpiration),
     });
-
-    if (user.refreshToken == "" || !user.refreshToken) {
-      const refreshToken = jwt.sign(
-        userInfo,
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-          expiresIn: "7d",
-        }
-      );
-      user.refreshToken = refreshToken;
-      const newUser = await user.save();
-      if (!newUser) return dbError(res);
-      res.cookie("jwt", refreshToken, {
-        httpOnly: true,
-        maxAge: 72 * 60 * 60 * 1000,
-      });
-    }
+    let refreshToken = await RefreshToken.createToken(user);
+    //The refreshToken is returned as a cookie and only accessible
+    //Via Http. This prevent prevent access from JS
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
+    });
+    userInfo["token"] = accessToken;
 
     return res.status(200).json({
       status: "success",
       code: 200,
-      data: { token: accessToken },
+      data: userInfo,
     });
   } catch (err) {
     console.log(err);
@@ -76,7 +73,7 @@ const createUserView = async (req, res) => {
 };
 
 const updateUserView = async (req, res) => {
-  if (req.user._id === req.params.id) {
+  if (req.userId === req.params.id) {
     try {
       const updatedUser = await User.findByIdAndUpdate(
         req.params.id,
@@ -94,7 +91,7 @@ const updateUserView = async (req, res) => {
 };
 
 const deleteUserView = async (req, res) => {
-  if (req.user._id === req.params.id) {
+  if (req.userId === req.params.id) {
     try {
       let { password } = req.body;
       if (!password)
@@ -152,7 +149,7 @@ const deleteUserView = async (req, res) => {
 };
 
 const getUserView = async (req, res) => {
-  if (req.user._id === req.params.id) {
+  if (req.userId === req.params.id) {
     try {
       const user = await User.findById(req.params.id);
       if (!user)
@@ -196,61 +193,59 @@ const getUserView = async (req, res) => {
 
 const refreshTokenView = async (req, res) => {
   const cookies = req.cookies;
-  if (!cookies || !cookies.jwt) return res.sendStatus(401);
+  if (!cookies || !cookies.jwt)
+    return badRequestResponse(res, "A valid jwt cookie missing. Login first");
 
   const refreshToken = cookies.jwt;
+  const userToken = await RefreshToken.findOne({
+    token: refreshToken,
+  }).populate("user");
+  if (!userToken) {
+    return forbidenAccess(res, "Refresh token is not in the database");
+  }
 
-  const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser)
-    return res.status(404).json({
-      status: "fail",
-      code: 404,
-      message: "Not found",
-    });
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err || foundUser.email !== decoded.email)
-      return res.status(403).json({
-        status: "fail",
-        code: 403,
-        message: "Invalid token",
-      });
-    const roles = Object.values(foundUser.roles);
-    const accessToken = jwt.sign(
-      {
-        email: decoded.email,
-        _id: decoded._id,
-        roles: roles,
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "50s" }
-    );
-    return res
-      .status(200)
-      .json({ status: "success", code: 200, token: accessToken });
-  });
+  if (RefreshToken.verifyExpiration(userToken)) {
+    await RefreshToken.findByIdAndDelete(userToken._id).exec();
+    res.clearCookie("jwt", { httpOnly: true });
+    return forbidenAccess(res, "Refresh token was expired. Login again");
+  }
+  const accessToken = jwt.sign(
+    {
+      email: userToken.user.email,
+      _id: userToken.user._id,
+      roles: userToken.user.roles,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
+  );
+
+  return res
+    .status(200)
+    .json({ status: "success", code: 200, data: { token: accessToken } });
 };
 
 const logoutView = async (req, res) => {
   const cookies = req.cookies;
   if (!cookies || !cookies.jwt)
-    return res.status(400).json({
+    return res.status(403).json({
       status: "fail",
-      code: 400,
+      code: 403,
       message: "Already signed out",
     });
 
   const refreshToken = cookies.jwt;
+  const userToken = await RefreshToken.findOne({
+    token: refreshToken,
+  }).exec();
 
-  const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser)
-    return res.status(404).json({
+  if (!userToken)
+    return res.status(403).json({
       status: "fail",
-      code: 400,
-      message: "Invalid token",
+      code: 403,
+      message: "Already signed out",
     });
-  foundUser.refreshToken = "";
+  await RefreshToken.findByIdAndDelete(userToken._id);
   res.clearCookie("jwt", { httpOnly: true });
-  await foundUser.save();
   return res.status(200).json({
     status: "success",
     code: 200,

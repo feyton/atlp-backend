@@ -22,6 +22,24 @@ const router = Router();
 /**
  * @openapi
  * components:
+ *  securitySchemes:
+ *    Token:
+ *      type: http
+ *      scheme: Bearer
+ *      bearerFormat: JWT
+ */
+
+/**
+ * @openapi
+ * components:
+ *  responses:
+ *    UnauthorizedError:
+ *      description: Access token is missing or invalid
+ */
+
+/**
+ * @openapi
+ * components:
  *  schemas:
  *      User:
  *          type: object
@@ -34,7 +52,7 @@ const router = Router();
  *              firstName: Fabrice
  *              lastName: Hafashimana
  *              email: info@me.com
- *              password: atlp123
+ *              password: Atlp@123
  *          properties:
  *              id:
  *                  type: string
@@ -68,7 +86,7 @@ const router = Router();
  *              - password
  *          example:
  *              email: info@me.com
- *              password: atlp123
+ *              password: Atlp@123
  *          properties:
  *              email:
  *                  type: string
@@ -78,6 +96,58 @@ const router = Router();
  *                  description: A user password.
 
  */
+
+/**
+ * @swagger
+ * /api/v1/accounts/signup:
+ *   post:
+ *     summary: Allow a user to register in the application
+ *     description: Expecting JSON formatted data in request body
+  *     tags:
+ *         - User
+ *     requestBody:
+ *         required: true
+ *         content:
+ *             application/json:
+ *                 schema:
+ *                     $ref: "#/components/schemas/User"
+ * 
+ *     responses:
+ *          200:
+ *              description: A user object is created and returned
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          #ref: "#/components/schemas/User"
+ *          400:
+ *              description: Invalid user input
+ *              content:
+ *                application/json:
+ *                  schema:
+ *                    error:
+ *                      type: object
+ *                      properties:
+ *                        status:
+ *                          type:string
+ *                        data: 
+ *                          type: object
+ *                        code:
+ *                          type: number
+ *          406:
+ *              description: Invalid data were received
+ *          409:
+ *              description: Sent email conflict with other user.
+ *          500:
+ *              description: Something went terribly wrong on our end.
+
+ */
+
+router.post(
+  "/signup",
+  userSignupValidationRules(),
+  validate,
+  views.createUserView
+);
 
 /**
  * @swagger
@@ -106,53 +176,43 @@ const router = Router();
  *              description: Wrong credentials were received. Check your email or password.
  *
  */
-router.post("/login", userValidationRules(), validate, validateLogin);
-
-
-/**
- * @swagger
- * /api/v1/account/signup:
- *   post:
- *     summary: Allow a user to register in the application
- *     description: Expecting JSON formatted data in request body
-  *     tags:
- *         - User
- *     requestBody:
- *         required: true
- *         content:
- *             application/json:
- *                 schema:
- *                     $ref: "#/components/schemas/User"
- * 
- *     responses:
- *          201:
- *              description: A user object is created and returned
- *              content:
- *                  application/json:
- *                      schema:
- *                          #ref: "#/components/schemas/User"
- *          400:
- *              description: Request missing required information
- *          406:
- *              description: Invalid data were received
- *          409:
- *              description: Sent email conflict with other user.
- *          500:
- *              description: Something went terribly wrong on our end.
-
- */
-
 router.post(
-  "/signup",
-  userSignupValidationRules(),
+  "/login",
+  userValidationRules(),
   validate,
-  views.createUserView
+  validateLogin,
+  views.loginView
 );
 
 /**
  * @swagger
- * /api/v1/account/profile/{id}:
+ * /api/v1/accounts/profile/{id}:
+ *   get:
+ *     security:
+ *       - Token: []
+ *     summary: Retrieve a single JSONPlaceholder user.
+ *     description: Retrieve a single JSONPlaceholder user. Can be used to populate a user profile when prototyping or testing an API.
+ *     tags:
+ *         - User
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: A valid mongodb user id. Returned when user signup.
+ *     responses:
+ *       401:
+ *           $ref: "#/components/responses/UnauthorizedError"
+ *
+ */
+
+router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
+
+/**
+ * @swagger
+ * /api/v1/accounts/profile/{id}:
  *   put:
+ *     security:
+ *       - Token: []
  *     summary: Update an individual User.
  *     description: Find and update the currently authenticated user with a valid token.
  *     tags:
@@ -164,13 +224,7 @@ router.post(
  *         description: A valid mongodb user id. Returned when user signup.
  *         schema:
  *           type: string
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
+
  *     responses:
  *       200:
  *         description: A user was updated
@@ -181,37 +235,10 @@ router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
 
 /**
  * @swagger
- * /api/v1/account/profile/{id}:
- *   get:
- *     summary: Retrieve a single JSONPlaceholder user.
- *     description: Retrieve a single JSONPlaceholder user. Can be used to populate a user profile when prototyping or testing an API.
- *     tags:
- *         - User
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: A valid mongodb user id. Returned when user signup.
- *         schema:
- *           $ref: "#components/User"
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
- *     responses:
- *       401:
- *           description: Missing a valid token to confirm access
- */
-
-router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
-
-/**
- * @swagger
- * /api/v1/account/{id}:
+ * /api/v1/accounts/{id}:
  *   delete:
+ *     security:
+ *       - Token: []
  *     summary: Delete a user specified in the id.
  *     description: Retrieve a single JSONPlaceholder user. Can be used to populate a user profile when prototyping or testing an API.
  *     tags:
@@ -223,13 +250,6 @@ router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
  *         description: A valid mongodb user id. Returned when user signup.
  *         schema:
  *           $ref: "#components/User"
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
  *     responses:
  *       200:
  *           description: The user has been deleted
@@ -241,25 +261,23 @@ router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
 /**
  * @swagger
  * path:
- * /api/v1/account/logout:
+ * /api/v1/accounts/logout:
  *   post:
  *     summary: Allow a user to logout
  *     description: A valid token is required to process request
  *     tags:
  *         - User
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         description: A token given to a user when they login. Copy and paste here
- *         required: true
- *         schema:
- *           type: string
- *           format: token
  *     responses:
- *         204:
- *             description: The request has been successful. No content to send
+ *         200:
+ *             description: The request has been successful. No data to send
+ *             content:
+ *               application/json
  *         401:
- *             description: Missing a valid token to confirm access
+ *             $ref: "#/components/responses/UnauthorizedError"
+ *         403:
+ *             description: User already signed out
+ *         500:
+ *             description: Server error. This is caused by server.
  *
  */
 

@@ -1,6 +1,7 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
+import { asyncHandler } from "../config/utils.js";
 import { checkObjectId } from "../userApp/middleware.js";
 import { verifyJWT } from "../userApp/utils.js";
 import { validate } from "../userApp/validator.js";
@@ -94,11 +95,13 @@ const router = Router();
  *         500:
  *             description: Server error/Not able to retrive the data
  */
-router.get("/", views.getBlogsView);
+router.get("/", asyncHandler(views.getBlogsView));
 /**
  * @openapi
  * /api/v1/blogs/cat:
  *   post:
+ *     security:
+ *       - Token: []
  *     summary: Allow a user to create a new category
  *     description: Authenticated user can create a blog category
  *     tags:
@@ -109,13 +112,6 @@ router.get("/", views.getBlogsView);
  *             application/json:
  *                 schema:
  *                     $ref: "#/components/schemas/Category"
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         required: true
- *         schema:
- *           type: string
- *           format: token
  *     responses:
  *       200:
  *         description: A user was updated
@@ -128,12 +124,15 @@ router.post(
   verifyJWT,
   createCategoryValidationRules(),
   validate,
-  views.createCategoryView
+  asyncHandler(views.createCategoryView)
 );
 /**
  * @openapi
  * /api/v1/blogs/:
  *   post:
+ *     security:
+ *       - Token: []
+ *
  *     summary: Allow a user to create a new blog post
  *     description: Authenticated user can create a blog post
  *     tags:
@@ -144,13 +143,6 @@ router.post(
  *             application/json:
  *                 schema:
  *                     $ref: "#/components/schemas/Blog"
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         required: true
- *         schema:
- *           type: string
- *           format: token
  *     responses:
  *       200:
  *         description: A user was updated
@@ -193,12 +185,14 @@ router.post(
  *         500:
  *           description: Something terribly happened to our end
  */
-router.get("/:id", checkObjectId, views.getBlogDetailView);
+router.get("/:id", checkObjectId, asyncHandler(views.getBlogDetailView));
 
 /**
  * @openapi
  * /api/v1/blogs/{id}:
  *   put:
+ *     security:
+ *       - Token: []
  *     summary: Allow a user to update a specific blogpost
  *     description: This require to be authenticated
  *     tags:
@@ -210,13 +204,7 @@ router.get("/:id", checkObjectId, views.getBlogDetailView);
  *         description: A valid mongodb blog id.
  *         schema:
  *           $ref: "#components/Blog"
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
+
  *     responses:
  *         200:
  *             description: A blog post is updated and is returned as JSONPlaceholder object
@@ -242,6 +230,8 @@ router.put(
  * @openapi
  * /api/v1/blogs/{id}:
  *   delete:
+ *     security:
+ *       - Token: []
  *     summary: Allow a user to delete a specific blog
  *     description: This require to be authenticated and be an owner of blog
  *     tags:
@@ -253,13 +243,6 @@ router.put(
  *         description: A valid mongodb blog id.
  *         schema:
  *           $ref: "#components/Blog"
- *       - in: header
- *         name: Authorization
- *         required: true
- *         description: A token given to a user when they login. Copy and paste here
- *         schema:
- *           type: string
- *           format: token
  *     responses:
  *         200:
  *             description: A blog post is deleted

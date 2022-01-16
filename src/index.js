@@ -14,6 +14,7 @@ import {
 } from "./base.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 import { IndexView } from "./indexApp/views.js";
+import { errLogger, logger } from "./config/utils.js";
 
 dotenv.config();
 connectDB();
@@ -22,6 +23,7 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions);
 const apiRoute = process.env.API_BASE || "/api/v1/";
 
 const app = express();
+app.use(logger);
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -38,6 +40,16 @@ app.use(
 app.use(apiRoute, IndexRouter);
 app.get("/", IndexView);
 
+
+app.all("*", (req, res) => {
+  return res.status(404).json({
+    status: "fail",
+    code: 404,
+    message: "Not found",
+  });
+});
+
+app.use(errLogger);
 const PORT = process.env.PORT || 3500;
 mongoose.connection.once("open", () => {
   console.log("Mongoose connected");

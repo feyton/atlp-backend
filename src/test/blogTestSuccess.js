@@ -70,7 +70,7 @@ describe("Blog Tests", function () {
       };
       let newUser = {
         email: "blog@gmail.com",
-        password: "Fab123",
+        password: "Fab1234@3.",
         lastName: "Fabrice",
         firstName: "Hafashiamana",
       };

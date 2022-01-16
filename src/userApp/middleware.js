@@ -1,15 +1,13 @@
-import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import {
   badRequestResponse,
   resourceNotFound,
-  successResponse,
 } from "../blogApp/errorHandlers.js";
 import * as models from "./models.js";
 
 const User = models.userModel;
 
-export const validateLogin = async (req, res) => {
+export const validateLogin = async (req, res, next) => {
   let foundUser = await User.findOne({
     email: req.body.email,
   }).exec();
@@ -23,26 +21,7 @@ export const validateLogin = async (req, res) => {
   const verified = await foundUser.comparePassword(req.body.password);
 
   if (verified) {
-    let { password, ...others } = foundUser._doc;
-    // return res.json(others)
-    const accessToken = jwt.sign(others, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "120s",
-    });
-
-    if (foundUser.refreshToken == "" || !foundUser.refreshToken) {
-      //assign refresh token for first time logins
-      const refreshToken = jwt.sign(others, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: "7d",
-      });
-      foundUser.refreshToken = refreshToken;
-      const newUser = await foundUser.save();
-      if (!newUser) return dbError(res);
-      res.cookie("jwt", refreshToken, {
-        httpOnly: true,
-        maxAge: 72 * 60 * 60 * 1000,
-      });
-    }
-    return successResponse(res, accessToken);
+    next();
   } else {
     return badRequestResponse(res, "Invalid credentials");
   }

@@ -1,49 +1,44 @@
+
 import jwt from "jsonwebtoken";
-import { serverError } from "../blogApp/errorHandlers.js";
+import { badRequestResponse } from "../blogApp/errorHandlers.js";
 
+const { TokenExpiredError } = jwt;
 
-const verifyJWT = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const cookies = req.cookies;
-  if (!authHeader && !cookies.jwt)
-    return res.status(400).json({
-      status: "fail",
-      code: 400,
-      data: {
-        parameter: "Authorization header required or a valid cookie",
-      },
-    });
-  if (authHeader) {
-    const token = authHeader.split(" ")[1];
-    if (token) {
-      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err && !cookies.jwt) {
-          return res.status(403).json({
-            status: "fail",
-            code: 403,
-            message: "invalid/Expired token was received",
-          });
-        }
-        req.user = decoded;
-        next();
-      });
-    }
-  } else if (cookies.jwt) {
-    const jwtCookie = cookies.jwt;
-    jwt.verify(jwtCookie, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(403).json({
-          status: "fail",
-          code: 403,
-          message: "invalid/Expired token was received",
-        });
-      }
-      req.user = decoded;
-      next();
-    });
-  } else {
-    return serverError(res);
+const catchError = (err, res) => {
+  if (err instanceof TokenExpiredError) {
+    return errorHandler(res, "fail", 401, "Unauthorized! Access Token expired");
   }
+  return errorHandler(res, "fail", 401, "Unauthorized. Invalid Token received");
 };
 
-export { verifyJWT };
+export const verifyJWT = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return badRequestResponse(res, "Missing required header");
+  const token = authHeader.split(" ")[1];
+  if (!token) return errorHandler(res, "fail", 400), "Not provided token";
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    // console.log(err);
+    if (err) {
+      return catchError(err, res);
+    }
+    req.userId = decoded._id;
+    req.user = decoded;
+    next();
+  });
+};
+
+const errorHandler = (res, status, code, message) => {
+  if (typeof message == String) {
+    return res.status(code).json({
+      status: status,
+      code: code,
+      message: message,
+    });
+  } else {
+    return res.status(code).json({
+      status: status,
+      code: code,
+      data: message,
+    });
+  }
+};

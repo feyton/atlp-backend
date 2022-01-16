@@ -14,11 +14,14 @@ export const serverError = (res) => {
   });
 };
 
-export const forbidenAccess = (res) => {
+export const forbidenAccess = (
+  res,
+  message = "You don't have access to the requested resource"
+) => {
   return res.status(403).json({
     status: "fail",
     code: 403,
-    message: "You don't have access to the requested resource",
+    message: message,
   });
 };
 
@@ -48,7 +51,7 @@ export const successResponse = (res, data) => {
 
 export const badRequestResponse = (
   res,
-  message = "Invalid/Missing required parameters"
+  message = "Invalid/ Missing required parameters"
 ) => {
   return res.status(400).json({
     status: "fail",
@@ -56,3 +59,5 @@ export const badRequestResponse = (
     message: message,
   });
 };
+
+// todo combine all functions into one

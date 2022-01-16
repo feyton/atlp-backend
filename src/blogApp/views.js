@@ -2,6 +2,7 @@
 //Equivalent to middleware. Create functions that process request here
 //Remember to import all in routes
 
+import { serve } from "swagger-ui-express";
 import { userModel } from "../userApp/models.js";
 import {
   dbError,
@@ -15,12 +16,11 @@ import * as models from "./models.js";
 const Blog = models.blogModel;
 const Category = models.categoryModel;
 
-const createBlogView = async (req, res) => {
+const createBlogView = async (req, res, next) => {
   try {
     //
     let newBlog = req.body;
-    newBlog["author"] = req.user._id;
-    console.log(newBlog);
+    newBlog["author"] = req.userId;
 
     const result = await Blog.create(newBlog);
     if (!result) return dbError(res);
@@ -30,17 +30,16 @@ const createBlogView = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    console.log(err);
     return serverError(res);
   }
 };
 
-const updateBlogView = async (req, res) => {
+const updateBlogView = async (req, res, next) => {
   try {
-    const author = req.user;
+    const author = req.userId;
     const blogPost = await Blog.findById(req.params.id);
     if (!blogPost) return resourceNotFound(res);
-    const isAuthor = await blogPost.isAuthor(author._id);
+    const isAuthor = await blogPost.isAuthor(author);
     if (!isAuthor && author.roles.Admin == "") return forbidenAccess(res);
 
     try {
@@ -72,17 +71,16 @@ const updateBlogView = async (req, res) => {
       return serverError(res);
     }
   } catch (error) {
-    console.log(error);
     return serverError(res);
   }
 };
 
-const deleteBlogView = async (req, res) => {
+const deleteBlogView = async (req, res, next) => {
   try {
-    const user = req.user;
+    const user = req.userId;
     const blog = await Blog.findById(req.params.id);
     if (!blog) return resourceNotFound(res);
-    if (!blog.author == user._id && user.roles.Admin == "")
+    if (!blog.author == user && !req.user.roles.Admin)
       return forbidenAccess(res);
 
     await blog.delete();
@@ -93,7 +91,7 @@ const deleteBlogView = async (req, res) => {
   }
 };
 
-const getBlogDetailView = async (req, res) => {
+const getBlogDetailView = async (req, res, next) => {
   try {
     const blog = await Blog.findById(req.params.id).populate("author", [
       "_id",
@@ -102,16 +100,16 @@ const getBlogDetailView = async (req, res) => {
       "profilePicture",
     ]);
     if (!blog) return resourceNotFound(res);
-    if (!blog.published && !req.user) return forbidenAccess(res);
+    if (!blog.published && !blog.isAuthor(req.user._id))
+      return forbidenAccess(res);
 
     return successResponse(res, blog);
   } catch (error) {
-    console.log(error);
     return dbError(res);
   }
 };
 
-const getBlogsView = async (req, res) => {
+const getBlogsView = async (req, res, next) => {
   let posts;
 
   posts = await Blog.find({ published: true }).populate("author", [
@@ -124,7 +122,7 @@ const getBlogsView = async (req, res) => {
 };
 
 // Category Views
-const createCategoryView = async (req, res) => {
+const createCategoryView = async (req, res, next) => {
   try {
     const result = await Category.create(red.body);
     return successResponse(res, result);
