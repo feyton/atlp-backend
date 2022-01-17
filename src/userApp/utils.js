@@ -40,15 +40,4 @@ const errorResponse = (error, message) => {
   return res;
 };
 
-export const validateData = (data) => {
-  let response = {};
-  (password) => {
-    if (!password.length > 6) {
-      response["password"] = "Must be at least 6 characters";
-    }
-  };
-
-  return response;
-};
-
 export { userAppUtil, verifyJWT, errorResponse };
