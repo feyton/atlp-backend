@@ -1,7 +1,7 @@
 //Hanle all other utility functions here and import them into other files
 import jsonwebtoken from "jsonwebtoken";
 import validator from "validator";
-
+// const { body, validationResult } = require("express-validator");
 const jwt = jsonwebtoken;
 
 const userAppUtil = () => {};
