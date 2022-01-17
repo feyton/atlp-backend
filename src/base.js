@@ -1,17 +1,29 @@
 import mongoose from "mongoose";
+import multer from "multer";
+import dotenv from "dotenv";
+dotenv.config();
+const serverUrl = process.env.SERVER_URL || "http://127.0.0.1:3500";
+const serverName = process.env.SERVER_NAME || "LOCAL HOST";
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_DB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    if (process.env.NODE_ENV == "test") {
+      console.log("Testing on test database");
+      mongoose.connect(process.env.TESTING_DB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    } else {
+      mongoose.connect(process.env.MONGO_DB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    }
   } catch (err) {
     console.error(err);
   }
 };
 
-import multer from "multer";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "media");
@@ -42,17 +54,13 @@ export const swaggerOptions = {
       },
       contact: {
         name: "Fabrice Hafashimana",
-        url: "https://feyton.co.rw",
+        url: "https://github.com/feyton/atlp-backend#readme",
       },
     },
     servers: [
       {
-        url: "http://127.0.0.1:3500",
-        description: "Development server",
-      },
-      {
-        url: "https://atlp-fabrice.herokuapp.com/",
-        description: "The production server",
+        url: serverUrl,
+        description: serverName,
       },
     ],
   },
