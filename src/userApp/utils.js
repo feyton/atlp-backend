@@ -1,4 +1,3 @@
-
 import jwt from "jsonwebtoken";
 import { badRequestResponse } from "../blogApp/errorHandlers.js";
 
