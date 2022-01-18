@@ -1,6 +1,8 @@
-import { v4 as uuid } from "uuid";
-import nodeEmoji from "node-emoji";
 import { format } from "date-fns";
+import { existsSync, promises as fsPromises } from "fs";
+import nodeEmoji from "node-emoji";
+import path, { join } from "path";
+import { v4 as uuid } from "uuid";
 
 export const errorHandler = (res, status, code, message) => {
   if (typeof message == String) {
@@ -18,9 +20,6 @@ export const errorHandler = (res, status, code, message) => {
   }
 };
 
-import path, { join } from "path";
-import { existsSync, promises as fsPromises } from "fs";
-import { serverError } from "../blogApp/errorHandlers.js";
 const __dirname = path.resolve();
 
 export const logEvents = async (message, file) => {
@@ -33,9 +32,7 @@ export const logEvents = async (message, file) => {
       });
     }
     await fsPromises.appendFile(join(__dirname, "logs", file), logItem);
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 };
 
 const buildMessage = (method) => {
@@ -57,12 +54,6 @@ const buildMessage = (method) => {
   }
 };
 
-const getOrigin = (origin) => {
-  if (origin == undefined) {
-    return `main-server`;
-  }
-  return origin;
-};
 export const logger = async (req, res, next) => {
   logEvents(
     `${buildMessage(req.method)}\t${req.method}\t${req.headers.origin}\t${
@@ -80,7 +71,6 @@ const errorMessage = [
 ];
 
 export const errLogger = (error, req, res, next) => {
-  console.log(error)
   let at = error.stack.split(/\r\n|\r|\n/)[1];
   logEvents(
     `${nodeEmoji.get("no_entry")}\t${buildMessage(req.method)}\t${

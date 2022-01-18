@@ -14,6 +14,7 @@ import {
 } from "../blogApp/errorHandlers.js";
 import * as models from "./models.js";
 import { RefreshToken } from "../config/models.js";
+import { errorHandler } from "../config/utils.js";
 const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 
@@ -26,12 +27,12 @@ const loginView = async (req, res) => {
       roles: user.roles,
       _id: user._id,
     };
-    console.log(tokenExpiration);
-
     const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: parseInt(tokenExpiration),
     });
     let refreshToken = await RefreshToken.createToken(user);
+    // TODO Ensuring that the refreshtoken is not deleted before expiration
+    // TODO This allow user to maintatin a session across devices.
     //The refreshToken is returned as a cookie and only accessible
     //Via Http. This prevent prevent access from JS
     res.cookie("jwt", refreshToken, {
@@ -46,7 +47,6 @@ const loginView = async (req, res) => {
       data: userInfo,
     });
   } catch (err) {
-    console.log(err);
     return serverError(res);
   }
 };
@@ -226,24 +226,50 @@ const refreshTokenView = async (req, res) => {
 
 const logoutView = async (req, res) => {
   const cookies = req.cookies;
-  if (!cookies || !cookies.jwt)
+  const accessToken = req.headers["authorization"];
+  if (!cookies || (!cookies.jwt && !accessToken))
     return res.status(403).json({
       status: "fail",
       code: 403,
       message: "Already signed out",
     });
 
-  const refreshToken = cookies.jwt;
-  const userToken = await RefreshToken.findOne({
-    token: refreshToken,
-  }).exec();
-
-  if (!userToken)
-    return res.status(403).json({
-      status: "fail",
-      code: 403,
-      message: "Already signed out",
+  if (cookies.jwt) {
+    const refreshToken = cookies.jwt;
+    const userToken = await RefreshToken.findOne({
+      token: refreshToken,
+    }).exec();
+    if (userToken) {
+      await RefreshToken.findByIdAndDelete(userToken._id);
+      res.clearCookie("jwt", { httpOnly: true });
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        data: null,
+      });
+    }
+    if (!userToken && !accessToken) {
+      return res.status(403).json({
+        status: "fail",
+        code: 403,
+        message: "Already signed out",
+      });
+    }
+  }
+  if (accessToken) {
+    jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET,async (err, decoded) => {
+      if (err) {
+        return errorHandler(err, res);
+      }
+      await RefreshToken.findByIdAndDelete(decoded._id);
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        data: null,
+      });
     });
+  }
+
   await RefreshToken.findByIdAndDelete(userToken._id);
   res.clearCookie("jwt", { httpOnly: true });
   return res.status(200).json({

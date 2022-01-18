@@ -80,8 +80,9 @@ const deleteBlogView = async (req, res, next) => {
     const user = req.userId;
     const blog = await Blog.findById(req.params.id);
     if (!blog) return resourceNotFound(res);
-    if (!blog.author == user && !req.user.roles.Admin)
+    if (!blog.author == user && !req.user.roles.Admin) {
       return forbidenAccess(res);
+    }
 
     await blog.delete();
 
@@ -100,11 +101,14 @@ const getBlogDetailView = async (req, res, next) => {
       "profilePicture",
     ]);
     if (!blog) return resourceNotFound(res);
-    if (!blog.published && !blog.isAuthor(req.user._id))
+    if (!blog.published && !blog.isAuthor(req.userId)) {
+      console.log("Not the author", blog.isAuthor(req.userId));
       return forbidenAccess(res);
+    }
 
     return successResponse(res, blog);
   } catch (error) {
+    console.log(err);
     return dbError(res);
   }
 };

@@ -34,7 +34,6 @@ export const getLogs = async (req, res, next) => {
       }
       next(err);
     }
-    console.log("File sent");
   });
 };
 //add your function to export

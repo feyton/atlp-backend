@@ -40,7 +40,6 @@ app.use(
 app.use(apiRoute, IndexRouter);
 app.get("/", IndexView);
 
-
 app.all("*", (req, res) => {
   return res.status(404).json({
     status: "fail",
