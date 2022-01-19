@@ -29,7 +29,6 @@ export const verifyJWT = (req, res, next) => {
     return responseHandler(res, "fail", 400, "Not provided token");
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    // console.log(err);
     if (err) {
       return catchError(err, res);
     }
