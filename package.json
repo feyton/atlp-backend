@@ -43,7 +43,7 @@
     "mongoose": "^6.1.6",
     "mongoose-slug-generator": "^1.0.4",
     "multer": "^1.4.4",
-    "swagger": "^0.7.5",
+    "swagger": "^0.0.1",
     "swagger-jsdoc": "5.0.1",
     "swagger-ui-express": "^4.3.0",
     "uuid": "^8.3.2"

@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { RefreshToken } from "../config/models.js";
 import { responseHandler } from "../config/utils.js";
 import * as models from "./models.js";
+import { catchError } from "./utils.js";
 dotenv.config();
 const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
@@ -249,9 +250,17 @@ const logoutView = async (req, res, next) => {
       process.env.ACCESS_TOKEN_SECRET,
       async (err, decoded) => {
         if (err) {
-          return errorHandler(err, res);
+          return catchError(err, res);
         }
-        await RefreshToken.findByIdAndDelete(decoded._id);
+        const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
+        if (!refreshtoken) {
+          return responseHandler(
+            res,
+            "fail",
+            400,
+            "You are already logged out"
+          );
+        }
         return responseHandler(res, "success", 200, {});
       }
     );

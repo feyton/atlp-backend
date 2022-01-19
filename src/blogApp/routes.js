@@ -35,7 +35,7 @@ const router = Router();
  *          properties:
  *              id:
  *                  type: string
- *                  description: The mongodb generated id of the individual book
+ *                  description: The mongodb generated id of the individual blog post
  *              title:
  *                  type: string
  *                  description: The blog post title and must be unique
@@ -66,7 +66,7 @@ const router = Router();
  *          properties:
  *              id:
  *                  type: string
- *                  description: The mongodb generated id of the individual book
+ *                  description: The mongodb generated id of the individual blog post
  *              title:
  *                  type: string
  *                  description: The blog post title and must be unique
