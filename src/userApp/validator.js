@@ -20,14 +20,7 @@ export const userSignupValidationRules = () => {
     body("email")
       .isEmail()
       .normalizeEmail()
-      .withMessage("You will need a valid email to signup")
-      .custom(async (value) => {
-        const duplicateEmail = await User.findOne({ email: value }).then(
-          (user) => {
-            if (user) return Promise.reject("Email is already taken");
-          }
-        );
-      }),
+      .withMessage("You will need a valid email to signup"),
     body("password")
       .isStrongPassword({
         minLength: 6,

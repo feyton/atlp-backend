@@ -41,6 +41,10 @@ const loginView = async (req, res, next) => {
 
 const createUserView = async (req, res, next) => {
   try {
+    const emailTaken = await User.findOne({ email: req.body.email });
+    if (emailTaken) {
+      return responseHandler(res, "fail", 409, "Email is taken");
+    }
     const result = await User.create(req.body);
     const { password, ...others } = result._doc;
     return responseHandler(res, "success", 200, {
