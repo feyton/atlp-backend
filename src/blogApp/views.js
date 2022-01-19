@@ -88,6 +88,7 @@ const deleteBlogView = async (req, res, next) => {
   try {
     const user = req.userId;
     const blog = await Blog.findById(req.params.id);
+
     if (!blog) {
       return responseHandler(res, "fail", 404, "Resource not found");
     }
@@ -98,6 +99,7 @@ const deleteBlogView = async (req, res, next) => {
         403,
         "You don't have access to the requested resource"
       );
+
     }
 
     await blog.delete();
@@ -109,6 +111,7 @@ const deleteBlogView = async (req, res, next) => {
 };
 
 const getBlogDetailView = async (req, res, next) => {
+
   const blog = await Blog.findById(req.params.id).populate("author", [
     "_id",
     "firstName",
@@ -117,6 +120,7 @@ const getBlogDetailView = async (req, res, next) => {
   ]);
   if (!blog) {
     return responseHandler(res, "fail", 404, "Resource not found");
+
   }
   if (!blog.published && !blog.isAuthor(req.userId)) {
     return responseHandler(

@@ -9,6 +9,7 @@ import { responseHandler } from "../config/utils.js";
 import * as models from "./models.js";
 import { catchError } from "./utils.js";
 dotenv.config();
+
 const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 
@@ -36,7 +37,9 @@ const loginView = async (req, res, next) => {
     userInfo["token"] = accessToken;
     return responseHandler(res, "success", 200, userInfo);
   } catch (err) {
+
     return responseHandler(res, "error", 500, "Something happened on our end!");
+
   }
 };
 
@@ -228,7 +231,9 @@ const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
   if (!cookies || (!cookies.jwt && !accessToken))
+
     return responseHandler(res, "fail", 403, "Already signed out");
+
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
@@ -238,6 +243,7 @@ const logoutView = async (req, res, next) => {
     if (userToken) {
       await RefreshToken.findByIdAndDelete(userToken._id);
       res.clearCookie("jwt", { httpOnly: true });
+
       return responseHandler(res, "success", 200, {});
     }
     if (!userToken && !accessToken) {
@@ -264,6 +270,7 @@ const logoutView = async (req, res, next) => {
         return responseHandler(res, "success", 200, {});
       }
     );
+
   }
 
   await RefreshToken.findByIdAndDelete(userToken._id);
