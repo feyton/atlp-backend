@@ -1,50 +1,40 @@
-import validator from "validator";
-const { isEmail } = validator;
+import mongoose from "mongoose";
+import {
+  badRequestResponse,
+  resourceNotFound,
+} from "../blogApp/errorHandlers.js";
 import * as models from "./models.js";
-import jsonwebtoken from "jsonwebtoken";
-import { hash, compare } from "bcrypt";
-const jwt = jsonwebtoken;
 const User = models.userModel;
 
-export const validateSignUpData = async (req, res, next) => {
-  const { firstName, lastName, email, password } = req.body;
-
-  if (!firstName || !lastName || !email || !password) {
-    return res.status(400).json({ message: "Bad request" });
+export const validateLogin = async (req, res, next) => {
+  let foundUser = await User.findOne({
+    email: req.body.email,
+  }).exec();
+  if (!foundUser) {
+    return res.status(400).json({
+      status: "fail",
+      code: 400,
+      message: "Invalid credentials",
+    });
   }
-  const isEmailValid = validator.isEmail(email);
-  if (!isEmailValid) return res.sendStatus(406);
+  const verified = await foundUser.comparePassword(req.body.password);
 
-  const duplicateEmail = await User.findOne({ email: email }).exec();
-  if (duplicateEmail) {
-    return res.status(409).json({ message: "Email is taken" });
+  if (verified) {
+    next();
+  } else {
+    return badRequestResponse(res, "Invalid credentials");
   }
-  const user = {
-    firstName: firstName,
-    lastName: lastName,
-    email: email,
-    password: password,
-  };
-  req.newUser = user;
-  next();
 };
 
-export const validateLogin = async (req, res, next) => {
-  let { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: "Bad request" });
-  }
-  let foundUser = await User.findOne({ email: email }).exec();
-  if (!foundUser) {
-    return res.status(406).json({ message: "Wrong credentials" });
-  }
+export const checkObjectId = (req, res, next) => {
+  if (!req.params.id)
+    return res.status(400).json({
+      status: "fail",
+      code: 400,
+      message: "Missing required parameter",
+    });
 
-  compare(password, foundUser.password, async (err, isMatch) => {
-    if (isMatch) {
-      req.foundUser = foundUser;
-      next();
-    } else {
-      return res.status(406).json({ message: "Wrong credentials" });
-    }
-  });
+  if (!mongoose.isValidObjectId(req.params.id)) return resourceNotFound(res);
+
+  next();
 };

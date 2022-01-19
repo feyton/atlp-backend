@@ -1,0 +1,22 @@
+
+---
+language: node_js
+node_js:
+- '10'
+- node
+sudo: false
+branches:
+  only:
+  - staging
+cache:
+  directories:
+  - node_modules
+deploy:
+  provider: heroku
+  skip_cleanup: true
+  keep-history: true
+  api_key:
+    secure: 2hT6ii6Shtea2FeJCvD4mlvKls3Ccd+IazfjDeocw+zuTgZg6joSqbSxJXG6AVB7CT8bcz7nU0V75yNROfbgo65ZeKkN7q+edypGSGBbqFX+5XZWXRGWVfcIgEbQag1QKP0L+oTfqXVbnnmO9xwDZ/KLVG3ovWjlddq0wkwMzFQrQkbPxVuBlLKO5Ufm+kRW9m3VKJ1uFHsc0jbHD1OiTEyTzMzmee2eDHsemqQKEGP0vqwoVnnFL8XKkGsFGI6ixE3ioVYAoN1DnhtFozzYEKJR2yqcsXC1O8X1vw1Ce0oJ7G5vC1J2msHJx9jF6tkylWVJ65oTKiwykh3A0+fqHYkTWLbrD8fv4ubboO5hN5DaCYCcexPK7oJr4D+XO9Xbd7cXol5DyHgea1P9Uwn1S+omcB1/rIVBWuRhFUOuMaCeS54+a4Hzs34LKGHQDN2xwAGxdtMxOH0guPzH0Fj6zrlEirk6ZmH2BsPKQvy9uLfyCpCfBpDyt3G9IOUxguWe/iH9wBF+HO7LLftdHnXy3ttLTVxSjV26XHQ2OHA9rDyOwLEpk2TqXB0Gz3y6X0urW5xJxGV1HIZ1S0Jmm8acZt6C6gGKgpkCeCogDW/reB75c9xuosE7MQMOxK+8NpXUI8t2FvuHfyZZAx9PSv0xwQDwVZ2YgK4el9cC0JjKRs4=
+  app: atlp-backend-staging
+
+
