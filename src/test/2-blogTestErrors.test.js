@@ -19,6 +19,7 @@ describe("Blog Testing Error Handling", async () => {
 
       expect(blogRequest).to.have.status(400);
       expect(blogRequest.body).to.be.a("object");
+      console.log(blogRequest.body);
       expect(blogRequest.body.message).to.eql("Missing required header");
     });
   });
@@ -59,6 +60,7 @@ describe("Blog Testing Error Handling", async () => {
 
       expect(userPostCreation).to.have.status(400);
       expect(userPostCreation.body).to.be.a("object");
+      console.log(userPostCreation.body);
       expect(userPostCreation.body).to.not.have.property("data");
       expect(userPostCreation.body.message).to.eql("Missing required header");
     });

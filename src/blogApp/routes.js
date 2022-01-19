@@ -156,7 +156,7 @@ router.post(
   verifyJWT,
   blogCreateValidationRules(),
   validate,
-  views.createBlogView
+  asyncHandler(views.createBlogView)
 );
 
 /**
@@ -223,7 +223,7 @@ router.put(
   checkObjectId,
   blogUpdateValidationRules(),
   validate,
-  views.updateBlogView
+  asyncHandler(views.updateBlogView)
 );
 
 /**
@@ -286,7 +286,12 @@ router.put(
  *                             message: string
 
  */
-router.delete("/:id", verifyJWT, checkObjectId, views.deleteBlogView);
+router.delete(
+  "/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.deleteBlogView)
+);
 
 //Keep this line at the bottom
 

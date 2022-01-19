@@ -11,10 +11,10 @@ import {
   connectDB,
   optionsToCustomizeSwagger,
   swaggerOptions,
-} from "./base.js";
+} from "./config/base.js";
+import { errLogger, logger } from "./config/utils.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 import { IndexView } from "./indexApp/views.js";
-import { errLogger, logger } from "./config/utils.js";
 
 dotenv.config();
 connectDB();
@@ -27,7 +27,6 @@ app.use(logger);
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.json());
 app.use(cookieParser());
 app.use(staticExpress(join(__dirname, "public")));
 

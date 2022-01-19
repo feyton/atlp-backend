@@ -1,11 +1,11 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
-import { upload } from "../base.js";
 import { router as BlogRouter } from "../blogApp/routes.js";
+import { upload } from "../config/base.js";
+import { asyncHandler } from "../config/utils.js";
 import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
-import { asyncHandler } from "../config/utils.js";
 import { getLogs } from "./views.js";
 
 const router = Router();
@@ -23,7 +23,8 @@ router.use("/blogs", BlogRouter);
 router.get(
   "/error",
   asyncHandler(async (req, res, next) => {
-    throw Error("Testing errors that works");
+    //the error should be logged
+    throw Error("Testing errors that log");
   })
 );
 
@@ -44,12 +45,12 @@ router.post("/uploads", upload.single("file"), (req, res) => {
  *         403:
  *             description: Invalid/ Expired token is received
  *         400:
- *             description: Missing a JWT cookie in request header. 
+ *             description: Missing a JWT cookie in request header.
  *         500:
  *             description: Server error
  */
 router.get("/refresh", refreshTokenView);
-router.get("/logs/:id", getLogs)
+router.get("/logs/:filename", getLogs);
 
 //Keep this line at the bottom
 

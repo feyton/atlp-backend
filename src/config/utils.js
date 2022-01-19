@@ -4,8 +4,8 @@ import nodeEmoji from "node-emoji";
 import path, { join } from "path";
 import { v4 as uuid } from "uuid";
 
-export const errorHandler = (res, status, code, message) => {
-  if (typeof message == String) {
+export const responseHandler = (res, status, code, message) => {
+  if (typeof message == "string") {
     return res.status(code).json({
       status: status,
       code: code,
@@ -80,11 +80,12 @@ export const errLogger = (error, req, res, next) => {
     }\t ${at}`,
     "errLog.txt"
   );
-  return res.status(500).json({
-    status: "error",
-    code: 500,
-    message: errorMessage[Math.floor(Math.random() * errorMessage.length)],
-  });
+  return responseHandler(
+    res,
+    "error",
+    500,
+    errorMessage[Math.floor(Math.random() * errorMessage.length)]
+  );
 };
 
 export const asyncHandler = (func) => (req, res, next) => {

@@ -1,6 +1,7 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
+import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
 import {
@@ -146,7 +147,7 @@ router.post(
   "/signup",
   userSignupValidationRules(),
   validate,
-  views.createUserView
+  asyncHandler(views.createUserView)
 );
 
 /**
@@ -181,7 +182,7 @@ router.post(
   userValidationRules(),
   validate,
   validateLogin,
-  views.loginView
+  asyncHandler(views.loginView)
 );
 
 /**
@@ -205,7 +206,12 @@ router.post(
  *
  */
 
-router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
+router.get(
+  "/profile/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.getUserView)
+);
 
 /**
  * @swagger
@@ -231,7 +237,12 @@ router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
  *       401:
  *           description: Missing a valid token to confirm access
  */
-router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
+router.put(
+  "/profile/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.updateUserView)
+);
 
 /**
  * @swagger
@@ -256,7 +267,12 @@ router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
  *       401:
  *           description: Missing a valid token to confirm access
  */
-router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
+router.delete(
+  "/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.deleteUserView)
+);
 
 /**
  * @swagger
@@ -281,7 +297,7 @@ router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
  *
  */
 
-router.post("/logout", verifyJWT, views.logoutView);
+router.post("/logout", verifyJWT, asyncHandler(views.logoutView));
 
 //write your routes here
 

@@ -1,6 +1,6 @@
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 import multer from "multer";
-import dotenv from "dotenv";
 dotenv.config();
 const serverUrl = process.env.SERVER_URL || "http://127.0.0.1:3500";
 const serverName = process.env.SERVER_NAME || "LOCAL HOST";
@@ -8,7 +8,7 @@ const serverName = process.env.SERVER_NAME || "LOCAL HOST";
 export const connectDB = async () => {
   try {
     if (process.env.NODE_ENV == "test") {
-      console.log("Testing on test database");
+      console.log("Test database loaded");
       mongoose.connect(process.env.TESTING_DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,

@@ -1,4 +1,5 @@
 import { body, validationResult } from "express-validator";
+import { responseHandler } from "../config/utils.js";
 import { userModel } from "./models.js";
 const User = userModel;
 
@@ -53,11 +54,7 @@ const validate = (req, res, next) => {
   errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
   console.log(extractedErrors);
   console.log(req.body);
-  return res.status(400).json({
-    status: "fail",
-    code: 400,
-    data: extractedErrors,
-  });
+  return responseHandler(res, "fail", 400, extractedErrors);
 };
 
 export { validate, userValidationRules };
