@@ -3,9 +3,9 @@
 import { Router } from "express";
 import { upload } from "../base.js";
 import { router as BlogRouter } from "../blogApp/routes.js";
+import { asyncHandler } from "../config/utils.js";
 import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
-import { asyncHandler } from "../config/utils.js";
 import { getLogs } from "./views.js";
 
 const router = Router();
@@ -44,12 +44,12 @@ router.post("/uploads", upload.single("file"), (req, res) => {
  *         403:
  *             description: Invalid/ Expired token is received
  *         400:
- *             description: Missing a JWT cookie in request header. 
+ *             description: Missing a JWT cookie in request header.
  *         500:
  *             description: Server error
  */
 router.get("/refresh", refreshTokenView);
-router.get("/logs/:id", getLogs)
+router.get("/logs/:id", getLogs);
 
 //Keep this line at the bottom
 

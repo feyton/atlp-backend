@@ -10,11 +10,11 @@ import swaggerUi from "swagger-ui-express";
 import {
   connectDB,
   optionsToCustomizeSwagger,
-  swaggerOptions,
+  swaggerOptions
 } from "./base.js";
+import { errLogger, logger } from "./config/utils.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 import { IndexView } from "./indexApp/views.js";
-import { errLogger, logger } from "./config/utils.js";
 
 dotenv.config();
 connectDB();
@@ -53,8 +53,9 @@ const PORT = process.env.PORT || 3500;
 mongoose.connection.once("open", () => {
   console.log("Mongoose connected");
   app.listen(PORT, () => {
-    console.log("Server started: ", PORT);
+    console.log("Server started: ", PORT, apiRoute);
   });
 });
 
 export { app, apiRoute };
+

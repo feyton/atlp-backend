@@ -4,7 +4,6 @@ import {
   resourceNotFound,
 } from "../blogApp/errorHandlers.js";
 import * as models from "./models.js";
-
 const User = models.userModel;
 
 export const validateLogin = async (req, res, next) => {
