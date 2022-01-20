@@ -17,9 +17,8 @@ describe("Blog Testing Error Handling", async () => {
         .post(apiRoute + "/blogs")
         .send(post);
 
-      expect(blogRequest).to.have.status(400);
+      expect(blogRequest).to.have.status(401);
       expect(blogRequest.body).to.be.a("object");
-      expect(blogRequest.body.message).to.eql("Missing required header");
     });
   });
   describe("Adding a Blog after signup but without sending the token", async () => {
@@ -42,7 +41,7 @@ describe("Blog Testing Error Handling", async () => {
         .request(app)
         .post(apiRoute + "/accounts/signup")
         .send(newUser);
-      expect(userSignUp).to.have.status(200);
+      expect(userSignUp).to.have.status(201);
       expect(userSignUp.body.data.user.email).to.eql("blog@gmadfil.com");
       userId = userSignUp.body.data.user._id;
 
@@ -57,10 +56,9 @@ describe("Blog Testing Error Handling", async () => {
         .post(apiRoute + "/blogs")
         .send(post);
 
-      expect(userPostCreation).to.have.status(400);
+      expect(userPostCreation).to.have.status(401);
       expect(userPostCreation.body).to.be.a("object");
       expect(userPostCreation.body).to.not.have.property("data");
-      expect(userPostCreation.body.message).to.eql("Missing required header");
     });
   });
 });
