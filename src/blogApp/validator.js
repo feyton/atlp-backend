@@ -1,5 +1,4 @@
 import { body, check } from "express-validator";
-import { blogModel, categoryModel } from "./models.js";
 
 export const blogCreateValidationRules = () => {
   return [
@@ -9,14 +8,7 @@ export const blogCreateValidationRules = () => {
     )
       .notEmpty()
       .isLength({ min: 5, max: 100 })
-      .bail()
-      .custom(async (value) => {
-        return blogModel.findOne({ title: value }).then((title) => {
-          if (title) {
-            return Promise.reject("The title already exists");
-          }
-        });
-      }),
+      .bail(),
     body(
       "summary",
       "A good summary should be at least 10 chars and not more than 300"
@@ -43,6 +35,7 @@ export const blogUpdateValidationRules = () => {
       .isLength({
         min: 10,
       }),
+    body("published").optional().toBoolean(),
   ];
 };
 
@@ -50,11 +43,7 @@ export const createCategoryValidationRules = () => {
   return [
     body("title", "A good title have 2 < chars > 10")
       .isLength({ min: 2, max: 20 })
-      .bail()
-      .custom(async (value) => {
-        const exists = await categoryModel.findOne({ title: value }).exec();
-        if (exists) return Promise.reject("The category already exists");
-      }),
+      .bail(),
     body("description", "Description is required").notEmpty(),
   ];
 };

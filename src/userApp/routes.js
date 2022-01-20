@@ -1,6 +1,5 @@
-//Use this file to specify the routes for the app
-//remember to include this routes in the index
 import { Router } from "express";
+import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
 import {
@@ -13,97 +12,12 @@ import * as views from "./views.js";
 const router = Router();
 
 /**
- * @openapi
- * tags:
- *  name: User
- *  description: Routes for the user App
- */
-
-/**
- * @openapi
- * components:
- *  securitySchemes:
- *    Token:
- *      type: http
- *      scheme: Bearer
- *      bearerFormat: JWT
- */
-
-/**
- * @openapi
- * components:
- *  responses:
- *    UnauthorizedError:
- *      description: Access token is missing or invalid
- */
-
-/**
- * @openapi
- * components:
- *  schemas:
- *      User:
- *          type: object
- *          required:
- *              - firstName
- *              - lastName
- *              - email
- *              - password
- *          example:
- *              firstName: Fabrice
- *              lastName: Hafashimana
- *              email: info@me.com
- *              password: Atlp@123
- *          properties:
- *              id:
- *                  type: string
- *                  description: The mongodb generated id of the individual user
- *              firstName:
- *                  type: string
- *                  description: user first name
- *              lastName:
- *                  type: string
- *                  description: User last name
- *              email:
- *                  type: string
- *                  description: A valid email
- *              password:
- *                  type: string
- *                  description: A user password.
- *              profile picture:
- *                  type: file
- *                  description: The user profile picture.
-
- */
-
-/**
- * @openapi
- * components:
- *  schemas:
- *      LoginInfo:
- *          type: object
- *          required:
- *              - email
- *              - password
- *          example:
- *              email: info@me.com
- *              password: Atlp@123
- *          properties:
- *              email:
- *                  type: string
- *                  description: A valid email
- *              password:
- *                  type: string
- *                  description: A user password.
-
- */
-
-/**
  * @swagger
  * /api/v1/accounts/signup:
  *   post:
  *     summary: Allow a user to register in the application
  *     description: Expecting JSON formatted data in request body
-  *     tags:
+ *     tags:
  *         - User
  *     requestBody:
  *         required: true
@@ -111,42 +25,23 @@ const router = Router();
  *             application/json:
  *                 schema:
  *                     $ref: "#/components/schemas/User"
- * 
+ *
  *     responses:
- *          200:
- *              description: A user object is created and returned
- *              content:
- *                  application/json:
- *                      schema:
- *                          #ref: "#/components/schemas/User"
+ *          201:
+ *              $ref: "#/components/responses/createdResponse"
  *          400:
- *              description: Invalid user input
- *              content:
- *                application/json:
- *                  schema:
- *                    error:
- *                      type: object
- *                      properties:
- *                        status:
- *                          type:string
- *                        data: 
- *                          type: object
- *                        code:
- *                          type: number
- *          406:
- *              description: Invalid data were received
+ *              $ref: "#/components/responses/badRequest"
  *          409:
- *              description: Sent email conflict with other user.
+ *              $ref: "#/components/responses/conflictResponse"
  *          500:
- *              description: Something went terribly wrong on our end.
-
+ *              $ref: "#/components/responses/serverError"
  */
 
 router.post(
   "/signup",
   userSignupValidationRules(),
   validate,
-  views.createUserView
+  asyncHandler(views.createUserView)
 );
 
 /**
@@ -167,13 +62,13 @@ router.post(
  *
  *     responses:
  *          200:
- *              description: A token is returned. Copy The token and use it on authentication
+ *              $ref: "#/components/responses/successResponse"
  *
  *          400:
- *              description: Missing required information in the request body
+ *              $ref: "#/components/responses/badRequest"
  *
- *          406:
- *              description: Wrong credentials were received. Check your email or password.
+ *          500:
+ *              $ref: "#/components/responses/serverError"
  *
  */
 router.post(
@@ -181,7 +76,7 @@ router.post(
   userValidationRules(),
   validate,
   validateLogin,
-  views.loginView
+  asyncHandler(views.loginView)
 );
 
 /**
@@ -200,12 +95,23 @@ router.post(
  *         required: true
  *         description: A valid mongodb user id. Returned when user signup.
  *     responses:
+ *       200:
+ *           $ref: "#/components/responses/successResponse"
  *       401:
  *           $ref: "#/components/responses/UnauthorizedError"
+ *       404:
+ *           $ref: "#/components/responses/notFound"
+ *       500:
+ *           $ref: "#/components/responses/serverError"
  *
  */
 
-router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
+router.get(
+  "/profile/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.getUserView)
+);
 
 /**
  * @swagger
@@ -226,12 +132,23 @@ router.get("/profile/:id", verifyJWT, checkObjectId, views.getUserView);
  *           type: string
 
  *     responses:
- *       200:
- *         description: A user was updated
+ *       201:
+ *         $ref: "#/components/responses/createdResponse"
+ *       400:
+ *           $ref: "#/components/responses/badRequest"
  *       401:
- *           description: Missing a valid token to confirm access
+ *           $ref: "#/components/responses/UnauthorizedError"
+ *       409:
+ *           $ref: "#/components/responses/conflictResponse"
+ *       500:
+ *           $ref: "#/components/responses/serverError"
  */
-router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
+router.put(
+  "/profile/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.updateUserView)
+);
 
 /**
  * @swagger
@@ -248,15 +165,34 @@ router.put("/profile/:id", verifyJWT, checkObjectId, views.updateUserView);
  *         name: id
  *         required: true
  *         description: A valid mongodb user id. Returned when user signup.
- *         schema:
- *           $ref: "#components/User"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *          application/json:
+ *            schema:
+ *              required:
+ *                - password
+ *              properties:
+ *                password:
+ *                  type: string
+ *                  example: Atlp@20220
+ *                  
  *     responses:
  *       200:
- *           description: The user has been deleted
+ *           $ref: "#/components/responses/successResponse"
+ *       400:
+ *           $ref: "#/components/responses/badRequest"
  *       401:
- *           description: Missing a valid token to confirm access
+ *           $ref: "#/components/responses/UnauthorizedError"
+ *       500:
+ *           $ref: "#/components/responses/serverError"
  */
-router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
+router.delete(
+  "/:id",
+  verifyJWT,
+  checkObjectId,
+  asyncHandler(views.deleteUserView)
+);
 
 /**
  * @swagger
@@ -269,19 +205,17 @@ router.delete("/:id", verifyJWT, checkObjectId, views.deleteUserView);
  *         - User
  *     responses:
  *         200:
- *             description: The request has been successful. No data to send
- *             content:
- *               application/json
+ *             $ref: "#/components/responses/successResponse"
  *         401:
  *             $ref: "#/components/responses/UnauthorizedError"
  *         403:
- *             description: User already signed out
+ *             $ref: "#/components/responses/forbidenError"
  *         500:
- *             description: Server error. This is caused by server.
+ *             $ref: "#/components/responses/serverError"
  *
  */
 
-router.post("/logout", verifyJWT, views.logoutView);
+router.post("/logout", verifyJWT, asyncHandler(views.logoutView));
 
 //write your routes here
 

@@ -2,8 +2,8 @@
 // link on database
 
 import mongoose from "mongoose";
-const { Schema, model } = mongoose;
 import { slug } from "./md.cjs";
+const { Schema, model } = mongoose;
 
 mongoose.plugin(slug);
 
@@ -34,7 +34,7 @@ const categorySchema = new Schema({
     required: true,
     unique: true,
   },
-  desc: {
+  description: {
     type: String,
     required: true,
   },

@@ -36,7 +36,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    refreshToken: String,
     provider: String,
     profilePicture: {
       type: String,

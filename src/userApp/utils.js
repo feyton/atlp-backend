@@ -1,22 +1,44 @@
 import jwt from "jsonwebtoken";
-import { badRequestResponse } from "../blogApp/errorHandlers.js";
+import { responseHandler } from "../config/utils.js";
 
 const { TokenExpiredError } = jwt;
 
-const catchError = (err, res) => {
+export const catchError = (err, res) => {
   if (err instanceof TokenExpiredError) {
-    return errorHandler(res, "fail", 401, "Unauthorized! Access Token expired");
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "Unauthorized! Access Token expired"
+    );
   }
-  return errorHandler(res, "fail", 401, "Unauthorized. Invalid Token received");
+  return responseHandler(
+    res,
+    "fail",
+    401,
+    "Unauthorized. Invalid Token received"
+  );
 };
 
 export const verifyJWT = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  if (!authHeader) return badRequestResponse(res, "Missing required header");
+  if (!authHeader)
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "Unauthorized. Missing token in header"
+    );
   const token = authHeader.split(" ")[1];
-  if (!token) return errorHandler(res, "fail", 400), "Not provided token";
+  if (!token) {
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "Unauthorized. Missing token in header"
+    );
+  }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    // console.log(err);
     if (err) {
       return catchError(err, res);
     }
@@ -26,18 +48,4 @@ export const verifyJWT = (req, res, next) => {
   });
 };
 
-const errorHandler = (res, status, code, message) => {
-  if (typeof message == String) {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      message: message,
-    });
-  } else {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      data: message,
-    });
-  }
-};
+

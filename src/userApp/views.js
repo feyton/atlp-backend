@@ -1,78 +1,46 @@
-//This is where all business logic is handled
-//Equivalent to middleware. Create functions that process request here
-//Remember to import all in routes
-
-import { compare } from "bcrypt";
 import dotenv from "dotenv";
-dotenv.config();
 import jwt from "jsonwebtoken";
-import {
-  badRequestResponse,
-  forbidenAccess,
-  serverError,
-  successResponse,
-} from "../blogApp/errorHandlers.js";
-import * as models from "./models.js";
 import { RefreshToken } from "../config/models.js";
-import { errorHandler } from "../config/utils.js";
+import { responseHandler } from "../config/utils.js";
+import * as models from "./models.js";
+import { catchError } from "./utils.js";
+dotenv.config();
+
 const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 
-const loginView = async (req, res) => {
-  try {
-    let user = await User.findOne({ email: req.body.email }).exec();
+const loginView = async (req, res, next) => {
+  let user = await User.findOne({ email: req.body.email }).exec();
 
-    let userInfo = {
-      email: user.email,
-      roles: user.roles,
-      _id: user._id,
-    };
-    const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: parseInt(tokenExpiration),
-    });
-    let refreshToken = await RefreshToken.createToken(user);
-    // TODO Ensuring that the refreshtoken is not deleted before expiration
-    // TODO This allow user to maintatin a session across devices.
-    //The refreshToken is returned as a cookie and only accessible
-    //Via Http. This prevent prevent access from JS
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
-    userInfo["token"] = accessToken;
-
-    return res.status(200).json({
-      status: "success",
-      code: 200,
-      data: userInfo,
-    });
-  } catch (err) {
-    return serverError(res);
-  }
+  let userInfo = {
+    email: user.email,
+    roles: user.roles,
+    _id: user._id,
+  };
+  const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: parseInt(tokenExpiration),
+  });
+  let refreshToken = await RefreshToken.createToken(user);
+  res.cookie("jwt", refreshToken, {
+    httpOnly: true,
+    maxAge: 72 * 60 * 60 * 1000,
+  });
+  userInfo["token"] = accessToken;
+  return responseHandler(res, "success", 200, userInfo);
 };
 
-const createUserView = async (req, res) => {
-  try {
-    const result = await User.create(req.body);
-    const { password, ...others } = result._doc;
-    res.status(200).json({
-      status: "success",
-      code: 200,
-      message: "Login is required to access protected resources",
-      data: {
-        user: others,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      code: 500,
-      message: "Something went wrong on our end",
-    });
-  }
+const createUserView = async (req, res, next) => {
+  const isTaken = await User.findOne({ email: req.body.email });
+  if (isTaken) return responseHandler(res, "fail", 409, "Email is taken");
+  const result = await User.create(req.body);
+  const { password, ...others } = result._doc;
+  return responseHandler(res, "success", 201, {
+    message: "Login is required to access protected resources",
+    user: others,
+  });
 };
 
-const updateUserView = async (req, res) => {
+const updateUserView = async (req, res, next) => {
   if (req.userId === req.params.id) {
     try {
       const updatedUser = await User.findByIdAndUpdate(
@@ -81,133 +49,135 @@ const updateUserView = async (req, res) => {
         { new: true }
       );
       const { password, ...others } = updatedUser._doc;
-      return successResponse(res, others);
+      return responseHandler(res, "success", 201, others);
     } catch (error) {
-      return serverError(res);
+      return responseHandler(
+        res,
+        "error",
+        500,
+        "Unable to process your request"
+      );
     }
   } else {
-    return forbidenAccess(res);
+    return responseHandler(
+      res,
+      "fail",
+      403,
+      "You don't have access to the requested resource"
+    );
   }
 };
 
-const deleteUserView = async (req, res) => {
+const deleteUserView = async (req, res, next) => {
   if (req.userId === req.params.id) {
     try {
       let { password } = req.body;
       if (!password)
-        return res.status(400).json({
-          status: "fail",
-          code: 400,
-          data: { password: "Password is required to delete user" },
+        return responseHandler(res, "fail", 400, {
+          password: "Password is required to delete user",
         });
 
       const user = await User.findById(req.params.id);
       if (!user)
-        return res.status(404).json({
-          status: "fail",
-          message: "Not found",
-          code: 404,
-        });
-      compare(password, user.password, async (err, isMatch) => {
-        if (isMatch) {
-          user.delete();
-          res.clearCookie("jwt", { httpOnly: true });
+        return responseHandler(
+          res,
+          "fail",
+          404,
+          "Requested resource can not be found"
+        );
 
-          return res.status(200).json({
-            sataus: "success",
-            code: 200,
-            data: null,
-          });
-        } else {
-          return res.status(400).json({
-            status: "fail",
-            code: 400,
-            message: "Invalid credentials",
-          });
-        }
-      });
+      const isPasswordValid = await user.comparePassword(password);
+      if (!isPasswordValid) {
+        return responseHandler(res, "fail", 400, "Invalid credentials");
+      }
+
+      user.delete();
+      res.clearCookie("jwt", { httpOnly: true });
+
+      return responseHandler(res, "success", 200, {});
     } catch (error) {
-      res.status(500).json({
-        status: "error",
-        code: 500,
-        message: "Something went wrong on our end",
-      });
+      return responseHandler(
+        res,
+        "error",
+        500,
+        "Something went wrong on our end"
+      );
     }
-  } else if (!req.params.id) {
-    return res.status(400).json({
-      status: "fail",
-      code: 400,
-      message: "Missing required parameter",
-    });
   } else {
-    return res.status(403).json({
-      status: "fail",
-      code: 403,
-      message: "You can only delete your account",
-    });
+    return responseHandler(
+      res,
+      "fail",
+      403,
+      "You don't have access to the requested resource"
+    );
   }
 };
 
-const getUserView = async (req, res) => {
+const getUserView = async (req, res, next) => {
   if (req.userId === req.params.id) {
     try {
       const user = await User.findById(req.params.id);
       if (!user)
-        return res.status(404).json({
-          status: 404,
-          code: 404,
-          message: "Resource not found",
-        });
+        return responseHandler(
+          res,
+          "fail",
+          404,
+          "The requested resource can not be found"
+        );
 
-      let userInfo = {
-        email: user.email,
-        lastName: user.lastName,
-        firstName: user.firstName,
-        roles: user.roles,
-        profilePicture: user.profilePicture,
-        createdAt: user.createdAt,
-        _id: user._id,
-      };
-      return res.status(200).json({
-        status: "success",
-        code: 200,
-        data: {
-          user: userInfo,
-        },
-      });
+      let { password, ...userInfo } = user._doc;
+
+      return responseHandler(res, "success", 200, userInfo);
     } catch (error) {
-      return res.status(500).json({
-        status: "error",
-        code: 500,
-        message: "Something went wrong on our end.",
-      });
+      return responseHandler(
+        res,
+        "error",
+        500,
+        "Unable to connect to the database"
+      );
     }
   } else {
-    return res.status(403).json({
-      status: "fail",
-      code: 403,
-      message: "You can only view your account",
-    });
+    return responseHandler(
+      res,
+      "fail",
+      403,
+      "You don't have access to the requested resource"
+    );
   }
 };
 
-const refreshTokenView = async (req, res) => {
+const refreshTokenView = async (req, res, next) => {
   const cookies = req.cookies;
   if (!cookies || !cookies.jwt)
-    return badRequestResponse(res, "A valid jwt cookie missing. Login first");
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "A valid jwt cookie missing. Login first"
+    );
 
   const refreshToken = cookies.jwt;
   const userToken = await RefreshToken.findOne({
     token: refreshToken,
   }).populate("user");
   if (!userToken) {
-    return forbidenAccess(res, "Refresh token is not in the database");
+    return responseHandler(
+      res,
+      "fail",
+      403,
+      "Refresh token is not in the database"
+    );
   }
 
   if (RefreshToken.verifyExpiration(userToken)) {
     await RefreshToken.findByIdAndDelete(userToken._id).exec();
     res.clearCookie("jwt", { httpOnly: true });
-    return forbidenAccess(res, "Refresh token was expired. Login again");
+    return responseHandler(
+      res,
+      "fail",
+      403,
+      "Refresh token expired. Log in is required"
+    );
   }
   const accessToken = jwt.sign(
     {
@@ -219,20 +189,14 @@ const refreshTokenView = async (req, res) => {
     { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
   );
 
-  return res
-    .status(200)
-    .json({ status: "success", code: 200, data: { token: accessToken } });
+  return responseHandler(res, "success", 200, { token: accessToken });
 };
 
-const logoutView = async (req, res) => {
+const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
   if (!cookies || (!cookies.jwt && !accessToken))
-    return res.status(403).json({
-      status: "fail",
-      code: 403,
-      message: "Already signed out",
-    });
+    return responseHandler(res, "fail", 403, "Already signed out");
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
@@ -241,42 +205,38 @@ const logoutView = async (req, res) => {
     }).exec();
     if (userToken) {
       await RefreshToken.findByIdAndDelete(userToken._id);
-      res.clearCookie("jwt", { httpOnly: true });
-      return res.status(200).json({
-        status: "success",
-        code: 200,
-        data: null,
-      });
+      res.cookie("jwt", "", { httpOnly: true, maxAge: 1 });
+      return responseHandler(res, "success", 200, {});
     }
     if (!userToken && !accessToken) {
-      return res.status(403).json({
-        status: "fail",
-        code: 403,
-        message: "Already signed out",
-      });
+      return responseHandler(res, "fail", 403, "Already signed out");
     }
   }
   if (accessToken) {
-    jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET,async (err, decoded) => {
-      if (err) {
-        return errorHandler(err, res);
+    jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET,
+      async (err, decoded) => {
+        if (err) {
+          return catchError(err, res);
+        }
+        const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
+        if (!refreshtoken) {
+          return responseHandler(
+            res,
+            "fail",
+            403,
+            "Forbiden! You are already logged out"
+          );
+        }
+        return responseHandler(res, "success", 200, {});
       }
-      await RefreshToken.findByIdAndDelete(decoded._id);
-      return res.status(200).json({
-        status: "success",
-        code: 200,
-        data: null,
-      });
-    });
+    );
   }
 
   await RefreshToken.findByIdAndDelete(userToken._id);
   res.clearCookie("jwt", { httpOnly: true });
-  return res.status(200).json({
-    status: "success",
-    code: 200,
-    data: null,
-  });
+  return responseHandler(res, "success", 200, {});
 };
 //add your function to export
 export {

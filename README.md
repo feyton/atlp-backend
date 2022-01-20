@@ -44,4 +44,7 @@ Or you can just clone this project and then
 ## Acknowledgement
 I want to thank everyone who contributed a lot especially @Musinda
 
+### Integrations
+1. PivotalTracker
+
 
