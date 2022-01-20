@@ -14,6 +14,7 @@ export const validateLogin = async (req, res, next) => {
   const verified = await foundUser.comparePassword(req.body.password);
 
   if (verified) {
+    
     next();
   } else {
     return responseHandler(res, "fail", 400, "Invalid credentials");

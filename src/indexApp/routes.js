@@ -11,12 +11,6 @@ import { getLogs } from "./views.js";
 const router = Router();
 
 //write your routes here
-/**
- * @openapi
- * tags:
- *  name: Index
- *  description: Routes for the user App
- */
 
 router.use("/accounts", UserRouter);
 router.use("/blogs", BlogRouter);
@@ -37,6 +31,7 @@ router.post("/uploads", upload.single("file"), (req, res) => {
  * /api/v1/refresh:
  *  get:
  *      summary: Refresh a user token
+ *      description: Use this route to refresh a token for a logged in user.
  *      tags:
  *          - Index
  *      responses:

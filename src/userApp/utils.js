@@ -23,10 +23,20 @@ export const catchError = (err, res) => {
 export const verifyJWT = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader)
-    return responseHandler(res, "fail", 400, "Missing required header");
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "Unauthorized. Missing token in header"
+    );
   const token = authHeader.split(" ")[1];
   if (!token) {
-    return responseHandler(res, "fail", 400, "Not provided token");
+    return responseHandler(
+      res,
+      "fail",
+      401,
+      "Unauthorized. Missing token in header"
+    );
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
@@ -37,3 +47,5 @@ export const verifyJWT = (req, res, next) => {
     next();
   });
 };
+
+

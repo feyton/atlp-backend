@@ -1,7 +1,3 @@
-//This is where all business logic is handled
-//Equivalent to middleware. Create functions that process request here
-//Remember to import all in routes
-
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { RefreshToken } from "../config/models.js";
@@ -13,49 +9,34 @@ const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 
 const loginView = async (req, res, next) => {
-  try {
-    let user = await User.findOne({ email: req.body.email }).exec();
+  let user = await User.findOne({ email: req.body.email }).exec();
 
-    let userInfo = {
-      email: user.email,
-      roles: user.roles,
-      _id: user._id,
-    };
-    const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: parseInt(tokenExpiration),
-    });
-    let refreshToken = await RefreshToken.createToken(user);
-    // TODO Ensuring that the refreshtoken is not deleted before expiration
-    // TODO This allow user to maintatin a session across devices.
-    //The refreshToken is returned as a cookie and only accessible
-    //Via Http. This prevent prevent access from JS
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
-    userInfo["token"] = accessToken;
-    return responseHandler(res, "success", 200, userInfo);
-  } catch (err) {
-    return responseHandler(res, "error", 500, "Something happened on our end!");
-  }
+  let userInfo = {
+    email: user.email,
+    roles: user.roles,
+    _id: user._id,
+  };
+  const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: parseInt(tokenExpiration),
+  });
+  let refreshToken = await RefreshToken.createToken(user);
+  res.cookie("jwt", refreshToken, {
+    httpOnly: true,
+    maxAge: 72 * 60 * 60 * 1000,
+  });
+  userInfo["token"] = accessToken;
+  return responseHandler(res, "success", 200, userInfo);
 };
 
 const createUserView = async (req, res, next) => {
-  try {
-    const result = await User.create(req.body);
-    const { password, ...others } = result._doc;
-    return responseHandler(res, "success", 200, {
-      message: "Login is required to access protected resources",
-      user: others,
-    });
-  } catch (err) {
-    return responseHandler(
-      res,
-      "error",
-      500,
-      "Something went wrong on our end!"
-    );
-  }
+  const isTaken = await User.findOne({ email: req.body.email });
+  if (isTaken) return responseHandler(res, "fail", 409, "Email is taken");
+  const result = await User.create(req.body);
+  const { password, ...others } = result._doc;
+  return responseHandler(res, "success", 201, {
+    message: "Login is required to access protected resources",
+    user: others,
+  });
 };
 
 const updateUserView = async (req, res, next) => {
@@ -67,7 +48,7 @@ const updateUserView = async (req, res, next) => {
         { new: true }
       );
       const { password, ...others } = updatedUser._doc;
-      return responseHandler(res, "success", 200, others);
+      return responseHandler(res, "success", 201, others);
     } catch (error) {
       return responseHandler(
         res,
@@ -112,7 +93,7 @@ const deleteUserView = async (req, res, next) => {
       user.delete();
       res.clearCookie("jwt", { httpOnly: true });
 
-      return responseHandler(res, "success", 200, null);
+      return responseHandler(res, "success", 200, {});
     } catch (error) {
       return responseHandler(
         res,
@@ -121,13 +102,6 @@ const deleteUserView = async (req, res, next) => {
         "Something went wrong on our end"
       );
     }
-  } else if (!req.params.id) {
-    return responseHandler(
-      res,
-      "fail",
-      400,
-      "Invalid/ Missing required parameters"
-    );
   } else {
     return responseHandler(
       res,
@@ -150,16 +124,9 @@ const getUserView = async (req, res, next) => {
           "The requested resource can not be found"
         );
 
-      let userInfo = {
-        email: user.email,
-        lastName: user.lastName,
-        firstName: user.firstName,
-        roles: user.roles,
-        profilePicture: user.profilePicture,
-        createdAt: user.createdAt,
-        _id: user._id,
-      };
-      return responseHandler(res, "success", 200, { user: userInfo });
+      let { password, ...userInfo } = user._doc;
+
+      return responseHandler(res, "success", 200, userInfo);
     } catch (error) {
       return responseHandler(
         res,
@@ -184,7 +151,7 @@ const refreshTokenView = async (req, res, next) => {
     return responseHandler(
       res,
       "fail",
-      400,
+      401,
       "A valid jwt cookie missing. Login first"
     );
 
@@ -237,7 +204,7 @@ const logoutView = async (req, res, next) => {
     }).exec();
     if (userToken) {
       await RefreshToken.findByIdAndDelete(userToken._id);
-      res.clearCookie("jwt", { httpOnly: true });
+      res.cookie("jwt", "", { httpOnly: true, maxAge: 1 });
       return responseHandler(res, "success", 200, {});
     }
     if (!userToken && !accessToken) {
@@ -257,8 +224,8 @@ const logoutView = async (req, res, next) => {
           return responseHandler(
             res,
             "fail",
-            400,
-            "You are already logged out"
+            403,
+            "Forbiden! You are already logged out"
           );
         }
         return responseHandler(res, "success", 200, {});

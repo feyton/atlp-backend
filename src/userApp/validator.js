@@ -20,14 +20,7 @@ export const userSignupValidationRules = () => {
     body("email")
       .isEmail()
       .normalizeEmail()
-      .withMessage("You will need a valid email to signup")
-      .custom(async (value) => {
-        const duplicateEmail = await User.findOne({ email: value }).then(
-          (user) => {
-            if (user) return Promise.reject("Email is already taken");
-          }
-        );
-      }),
+      .withMessage("You will need a valid email to signup"),
     body("password")
       .isStrongPassword({
         minLength: 6,
@@ -50,10 +43,10 @@ const userValidationRules = () => {
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
-  const extractedErrors = [];
-  errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
-  console.log(extractedErrors);
-  console.log(req.body);
+  const extractedErrors = {};
+  errors.array().forEach(err=>{
+    extractedErrors[err.param] = err.msg
+  })
   return responseHandler(res, "fail", 400, extractedErrors);
 };
 

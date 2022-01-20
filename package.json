@@ -4,13 +4,12 @@
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
   "scripts": {
-    "test": "set NODE_ENV=test&&mocha ./src/test/ --require mocha-steps --recursive --timeout 30000",
+    "test": "set NODE_ENV=test&&mocha ./src/test/ --recursive --timeout 30000",
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "createApp": "node ./createApp.js",
-    "coverage": "nyc mocha ./src/test/"
+    "coverage": "nyc mocha ./src/test/ --coverage --recursive"
   },
   "repository": {
     "type": "git",
@@ -57,7 +56,6 @@
     "chai-http": "^4.3.0",
     "faker": "^6.6.6",
     "mocha": "^9.1.3",
-    "mocha-steps": "^1.3.0",
     "node-emoji": "^1.11.0",
     "nodemon": "^2.0.15",
     "nyc": "^15.1.0",

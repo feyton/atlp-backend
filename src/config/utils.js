@@ -80,6 +80,13 @@ export const errLogger = (error, req, res, next) => {
     }\t ${at}`,
     "errLog.txt"
   );
+
+  if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+    console.error(error);
+    return res
+      .status(406)
+      .send({ code: 406, status: "fail", message: error.message }); // Bad request
+  }
   return responseHandler(
     res,
     "error",

@@ -13,71 +13,6 @@ import {
 import * as views from "./views.js";
 const router = Router();
 
-//write your routes here
-
-/**
- * @openapi
- * tags:
- *  name: Blog
- *  description: Routes for the user App
- */
-
-/**
- * @openapi
- * components:
- *  schemas:
- *      Blog:
- *          type: object
- *          required:
- *              title
- *              summary
- *              content
- *          properties:
- *              id:
- *                  type: string
- *                  description: The mongodb generated id of the individual blog post
- *              title:
- *                  type: string
- *                  description: The blog post title and must be unique
- *              summary:
- *                  type: string
- *                  description: The summary of the post. Not more than 200 words.
- *              author:
- *                  type: Object
- *                  description: The post author will be set as the logged in user.
- *              content:
- *                  type: string
- *                  description: The content of the blog post.
- *          example:
- *              title: Post 1
- *              summary: Here is the summary
- *              content: Here is content
- */
-
-/**
- * @openapi
- * components:
- *  schemas:
- *      Category:
- *          type: object
- *          required:
- *              title
- *              desc
- *          properties:
- *              id:
- *                  type: string
- *                  description: The mongodb generated id of the individual blog post
- *              title:
- *                  type: string
- *                  description: The blog post title and must be unique
- *              desc:
- *                  type: string
- *                  description: The summary of the post. Not more than 200 words.
- *          example:
- *              title: Tutorials
- *              desc: For tech savvy
- */
-
 /**
  * @openapi
  * /api/v1/blogs:
@@ -89,11 +24,9 @@ const router = Router();
  *
  *     responses:
  *         200:
- *             description: A list of post objects
- *         201:
- *             description: No posts created yet
+ *             $ref: "#/components/responses/successResponse"
  *         500:
- *             description: Server error/Not able to retrive the data
+ *             $ref: "#/components/responses/serverError"
  */
 router.get("/", asyncHandler(views.getBlogsView));
 /**
@@ -114,9 +47,15 @@ router.get("/", asyncHandler(views.getBlogsView));
  *                     $ref: "#/components/schemas/Category"
  *     responses:
  *       200:
- *         description: A user was updated
+ *         $ref: "#/components/responses/successResponse"
+ *       400:
+ *           $ref: "#/components/responses/badRequest"
  *       401:
- *           description: Missing a valid token to confirm access
+ *           $ref: "#/components/responses/UnauthorizedError"
+ *       409:
+ *           $ref: "#/components/responses/conflictResponse"
+ *       500:
+ *           $ref: "#/components/responses/serverError"
  */
 
 router.post(
@@ -145,11 +84,15 @@ router.post(
  *                     $ref: "#/components/schemas/Blog"
  *     responses:
  *       200:
- *         description: A user was updated
+ *         $ref: "#/components/responses/successResponse"
+ *       400:
+ *         $ref: "#/components/responses/badRequest"
  *       401:
- *           description: Missing a valid token to confirm access
+ *           $ref: "#/components/responses/UnauthorizedError"
  *       409:
- *           description: Title already exists and there is conflict
+ *           $ref: "#/components/responses/conflictResponse"
+ *       500:
+ *           $ref: "#/components/responses/serverError"
  */
 router.post(
   "/",
@@ -172,18 +115,13 @@ router.post(
  *         name: id
  *         required: true
  *         description: A valid mongodb blog id.
- *         schema:
- *           $ref: "#components/Blog"
-
  *     responses:
  *         200:
- *             description: A blog post is returned as JSON
+ *             $ref: "#/components/responses/successResponse"
  *         404:
- *             description: A blog post does not exist
- *         400:
- *             description: Missing the id in path
+ *             $ref: "#/components/responses/notFound"
  *         500:
- *           description: Something terribly happened to our end
+ *           $ref: "#/components/responses/serverError"
  */
 router.get("/:id", checkObjectId, asyncHandler(views.getBlogDetailView));
 
@@ -207,15 +145,15 @@ router.get("/:id", checkObjectId, asyncHandler(views.getBlogDetailView));
 
  *     responses:
  *         200:
- *             description: A blog post is updated and is returned as JSONPlaceholder object
- *         404:
- *             description: A blog post you are trying to edit does not exist
+ *             $ref: "#/components/responses/successResponse"
  *         400:
- *             description: Missing blog id
- *         500:
- *             description: Server error
+ *             $ref: "#/components/responses/badRequest"
  *         403:
- *             description: The blog author is diffrent from the authenticated user
+ *             $ref: "#/components/responses/forbidenError"
+ *         404:
+ *             $ref: "#/components/responses/notFound"
+ *         500:
+ *             $ref: "#/components/responses/serverError"
  */
 router.put(
   "/:id",
@@ -241,49 +179,17 @@ router.put(
  *         name: id
  *         required: true
  *         description: A valid mongodb blog id.
- *         schema:
- *           $ref: "#components/Blog"
  *     responses:
  *         200:
- *             description: A blog post is deleted
- *             content:
- *                 application/json:
- *                     schema:
- *                         type: object
- *                         properties:
- *                             status: string
- *                             code: int
- *                             data: null
- *         404:
- *             description: A blog post does not exist
- *             content:
- *                 application/json:
- *                     schema:
- *                         type: object
- *                         properties:
- *                             status: string
- *                             code: int
- *                             message: string
- *         400:
- *             description: Missing the id in path
- *             content:
- *                 application/json:
- *                     schema:
- *                         type: object
- *                         properties:
- *                             status: string
- *                             code: int
- *                             message: string
+ *             $ref: "#/components/responses/successResponse"
  *         401:
- *             description: Missing a valid token
- *             content:
- *                 application/json:
- *                     schema:
- *                         type: object
- *                         properties:
- *                             status: string
- *                             code: int
- *                             message: string
+ *             $ref: "#/components/responses/UnauthorizedError"
+ *         403:
+ *             $ref: "#/components/responses/forbidenError"
+ *         404:
+ *             $ref: "#/components/responses/notFound"
+ *         500:
+ *             $ref: "#/components/responses/serverError"
 
  */
 router.delete(

@@ -4,7 +4,7 @@ import { responseHandler } from "../config/utils.js";
 const __dirname = path.resolve();
 
 const IndexView = (req, res) => {
-  return res.redirect("/docs");
+  return res.status(307).redirect("/docs");
 };
 
 export const getLogs = async (req, res, next) => {
