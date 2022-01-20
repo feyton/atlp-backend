@@ -20,8 +20,10 @@ describe("User- Fail& Errors", async () => {
         .send(newUser);
       expect(userPost).to.have.status(400);
       expect(userPost.body).to.be.a("object");
-      expect(userPost.body).to.have.property("data").to.be.a("array");
-      expect(userPost.body.data.length).to.eql(3);
+      expect(userPost.body)
+        .to.have.property("data")
+        .to.be.a("object")
+        .to.have.property("password");
     });
   });
   describe("User Login ", () => {
