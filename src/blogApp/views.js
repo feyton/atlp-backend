@@ -73,14 +73,16 @@ const deleteBlogView = async (req, res, next) => {
     if (!blog) {
       return responseHandler(res, "fail", 404, "Resource not found");
     }
-    if (!blog.author == user && !req.user.roles.Admin) {
+  
+    const isAthor = await blog.isAuthor(user);
+
+    if (!isAthor && !req.user.roles.Admin) {
       return responseHandler(
         res,
         "fail",
         403,
         "You don't have access to the requested resource"
       );
-
     }
 
     await blog.delete();
@@ -92,7 +94,6 @@ const deleteBlogView = async (req, res, next) => {
 };
 
 const getBlogDetailView = async (req, res, next) => {
-
   const blog = await Blog.findById(req.params.id).populate("author", [
     "_id",
     "firstName",
@@ -101,10 +102,12 @@ const getBlogDetailView = async (req, res, next) => {
   ]);
   if (!blog) {
     return responseHandler(res, "fail", 404, "Resource not found");
-
+    //TODO Add the ability for admin to view unpublished blogs
   }
-  if (!blog.published && !blog.isAuthor(req.userId)) {
-    return responseHandler(res, "fail", 404, "Resource not found");
+
+  if (!blog.published) {
+    req.postID = blog._id;
+    return next();
   }
 
   return responseHandler(res, "success", 200, blog);
