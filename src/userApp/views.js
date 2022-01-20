@@ -5,6 +5,7 @@ import { responseHandler } from "../config/utils.js";
 import * as models from "./models.js";
 import { catchError } from "./utils.js";
 dotenv.config();
+
 const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 

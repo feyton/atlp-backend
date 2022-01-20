@@ -2,7 +2,9 @@
 //remember to include this routes in the index
 import { Router } from "express";
 import { router as BlogRouter } from "../blogApp/routes.js";
+
 import { upload } from "../config/base.js";
+
 import { asyncHandler } from "../config/utils.js";
 import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
@@ -45,7 +47,9 @@ router.post("/uploads", upload.single("file"), (req, res) => {
  *             description: Server error
  */
 router.get("/refresh", refreshTokenView);
+
 router.get("/logs/:filename", getLogs);
+
 
 //Keep this line at the bottom
 

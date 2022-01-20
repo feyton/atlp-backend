@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { responseHandler } from "../config/utils.js";
 import * as models from "./models.js";
-
 const User = models.userModel;
 
 export const validateLogin = async (req, res, next) => {
