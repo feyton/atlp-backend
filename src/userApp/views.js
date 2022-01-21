@@ -67,7 +67,7 @@ const deleteUserView = async (req, res, next) => {
     return resHandler(res, "fail", 400, "Invalid credentials");
   }
 
-  user.delete();
+  const deleteUser = await user.delete();
   return clearCookie(res);
 };
 
