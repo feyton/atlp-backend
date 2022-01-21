@@ -176,7 +176,7 @@ router.put(
  *                password:
  *                  type: string
  *                  example: Atlp@20220
- *                  
+ *
  *     responses:
  *       200:
  *           $ref: "#/components/responses/successResponse"
@@ -215,7 +215,7 @@ router.delete(
  *
  */
 
-router.post("/logout", verifyJWT, asyncHandler(views.logoutView));
+router.post("/logout", asyncHandler(views.logoutView));
 
 //write your routes here
 
