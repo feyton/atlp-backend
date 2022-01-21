@@ -4,12 +4,13 @@
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
   "scripts": {
-    "test": "set NODE_ENV=test&&nyc mocha ./src/test/ --recursive --timeout 30000 --exit",
+    "test": "mocha --require babel-core/register ./src/test/ --recursive --timeout 30000  --exit ",
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "coverage": "nyc report --reporter=text-lcov | coveralls && nyc report --reporter=lcov",
+    "cover": "c8 --check-coverage npm t",
+    "coverage": "nyc npm test && nyc report --reporter=lcov --reporter=html --reporter=text-lcov | coveralls",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
 
   },
@@ -56,6 +57,8 @@
     "@babel/core": "^7.16.7",
     "@babel/preset-env": "^7.16.8",
     "aria-mocha": "^0.7.3",
+    "babel-register": "^6.26.0",
+    "c8": "^7.11.0",
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
     "faker": "^6.6.6",
@@ -63,6 +66,7 @@
     "node-emoji": "^1.11.0",
     "nodemon": "^2.0.15",
     "nyc": "^15.1.0",
-    "sinon": "^12.0.1"
+    "sinon": "^12.0.1",
+    "supertest": "^6.2.2"
   }
 }
