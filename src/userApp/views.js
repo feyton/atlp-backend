@@ -68,7 +68,7 @@ const deleteUserView = async (req, res, next) => {
   }
 
   user.delete();
-  return clearCookie(res)
+  return clearCookie(res);
 };
 
 const getUserView = async (req, res, next) => {
