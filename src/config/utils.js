@@ -4,20 +4,14 @@ import nodeEmoji from "node-emoji";
 import path, { join } from "path";
 import { v4 as uuid } from "uuid";
 
-export const errorHandler = (res, status, code, message) => {
-  if (typeof message == String) {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      message: message,
-    });
+export const responseHandler = (res, status, code, message) => {
+  let response = { status: status, code: code };
+  if (typeof message == "string") {
+    response["message"] = message;
   } else {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      data: message,
-    });
+    response["data"] = message;
   }
+  return res.status(code).json(response);
 };
 
 const __dirname = path.resolve();
@@ -80,11 +74,19 @@ export const errLogger = (error, req, res, next) => {
     }\t ${at}`,
     "errLog.txt"
   );
-  return res.status(500).json({
-    status: "error",
-    code: 500,
-    message: errorMessage[Math.floor(Math.random() * errorMessage.length)],
-  });
+
+  if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+    console.error(error);
+    return res
+      .status(406)
+      .send({ code: 406, status: "fail", message: error.message }); // Bad request
+  }
+  return responseHandler(
+    res,
+    "error",
+    500,
+    errorMessage[Math.floor(Math.random() * errorMessage.length)]
+  );
 };
 
 export const asyncHandler = (func) => (req, res, next) => {

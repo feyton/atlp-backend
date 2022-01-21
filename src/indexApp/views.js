@@ -1,12 +1,11 @@
 //This is where all business logic is handled
-import fs from "fs";
-import path, { join, dirname } from "path";
+import path, { join } from "path";
+import { responseHandler } from "../config/utils.js";
 const __dirname = path.resolve();
 
 const IndexView = (req, res) => {
-  return res.redirect("/docs");
+  return res.status(307).redirect("/docs");
 };
-
 
 export const getLogs = async (req, res, next) => {
   let options = {
@@ -18,7 +17,7 @@ export const getLogs = async (req, res, next) => {
     },
   };
 
-  let filename = req.params.id;
+  let filename = req.params.filename;
   res.sendFile(filename, options, (err) => {
     //since heroku does not provide access to system files
     //this view will be used to retrieve the current Logs
@@ -26,11 +25,7 @@ export const getLogs = async (req, res, next) => {
     //TODO schedule periodics archiving of the Logs.
     if (err) {
       if (err.status == 404) {
-        return res.status(404).json({
-          status: "fail",
-          code: 404,
-          message: "Resource not found",
-        });
+        responseHandler(res, "fail", 404, "Resource not found");
       }
       next(err);
     }
