@@ -27,6 +27,7 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - run: echo "The database URl is ${{env.TESTING_DB_URL}}"
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
