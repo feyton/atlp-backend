@@ -67,9 +67,11 @@ const deleteUserView = async (req, res, next) => {
   }
 
   user.delete();
-  res.cookie("jwt", "", { httpOnly: true, maxAge: 1 });
-
-  return resHandler(res, "success", 200, {});
+  return res.cookie("jwt", "", { httpOnly: true, maxAge: 1 }).status(200).json({
+    status: "success",
+    code: 200,
+    data: {},
+  });
 };
 
 const getUserView = async (req, res, next) => {
@@ -132,20 +134,16 @@ const refreshTokenView = async (req, res, next) => {
 };
 
 const logoutWithToken = async (res, accessToken) => {
-  jwt.verify(
-    accessToken,
-    process.env.ACCESS_TOKEN_SECRET,
-    async (err, decoded) => {
-      console.log(accessToken);
-      if (err) return resHandler(res, "fail", 403, "Already logged out");
+  let token = accessToken.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
+    if (err) return resHandler(res, "fail", 403, "Already logged out");
 
-      const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
-      if (!refreshtoken)
-        return resHandler(res, "fail", 403, "Already logged out");
+    const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
+    if (!refreshtoken) console.log("Deleted from token");
+    return resHandler(res, "fail", 403, "Already logged out");
 
-      return resHandler(res, "success", 200, {});
-    }
-  );
+    return resHandler(res, "success", 200, {});
+  });
 };
 
 const logoutView = async (req, res, next) => {
@@ -159,7 +157,7 @@ const logoutView = async (req, res, next) => {
     const userToken = await RefreshToken.findOneAndDelete({
       token: refreshToken,
     }).exec();
-    if (!userToken && !accessToken)
+    if (!userToken || !accessToken)
       return resHandler(res, "fail", 403, "Already signed out");
 
     return res
