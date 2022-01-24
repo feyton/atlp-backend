@@ -19,6 +19,7 @@ env:
   ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
   API_BASE: ${{secrets.API_BASE}}
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+
 jobs:
   # This workflow contains a single job called "build"
   build:
@@ -27,6 +28,9 @@ jobs:
     env:
       TESTING_DB_URL: ${{secrets.TESTING_DB_URL}}
       ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
+      REFRESH_TOKEN_SECRET: ${{secrets.REFRESH_TOKEN_SECRET}}
+      JWT_EXPIRATION: ${{secrets.JWT_EXPIRATION}}
+      JWT_REFRESH_EXPIRATION: ${{secrets.JWT_REFRESH_EXPIRATION}}
       API_BASE: ${{secrets.API_BASE}}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
