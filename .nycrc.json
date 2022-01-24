@@ -1,0 +1,10 @@
+{
+  "all": true,
+  "include": ["src/**/routes.js"],
+  "exclude": ["**/*.spec.js"],
+
+  "functions": 50,
+  "branches": 60,
+  "lines": 0
+
+}

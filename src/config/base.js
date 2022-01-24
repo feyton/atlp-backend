@@ -7,15 +7,15 @@ const serverName = process.env.SERVER_NAME || "LOCAL HOST";
 
 export const connectDB = async () => {
   try {
-    if (process.env.NODE_ENV == "test" || env.NODE_ENV == "test") {
+    if (process.env.NODE_ENV == "test") {
       console.log("Test database loaded");
-      mongoose.connect(process.env.TESTING_DB_URL || env.TESTING_DB_URL, {
+      mongoose.connect(process.env.TESTING_DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
       console.log("Connected to the testing bed");
     } else {
-      mongoose.connect(process.env.MONGO_DB_URL || env.MONGO_DB_URL, {
+      mongoose.connect(process.env.MONGO_DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
