@@ -44,9 +44,9 @@ jobs:
       - run: npm test
       - run: npm run coverage
       - name: coveralls
-        uses: coverallsapp/github-action@v1.1.2
+        uses: coverallsapp/github-action@master
         with:
-          github-token: ${{ secrets.github_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           git-branch: githubAction
   deploy:
     runs-on: ubuntu-latest
