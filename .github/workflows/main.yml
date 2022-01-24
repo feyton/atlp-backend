@@ -46,8 +46,7 @@ jobs:
       - name: coveralls
         uses: coverallsapp/github-action@master
         with:
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          repo_token: ${{secrets.REPO_TOKEN}}
+          github-token: ${{ secrets.github_token }}
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
