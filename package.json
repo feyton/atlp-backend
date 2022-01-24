@@ -8,7 +8,7 @@
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "coverage": "nyc report --reporter=lcov",
+    "coverage": "nyc report --report=lcov --reporter=html",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
   },
   "repository": {
