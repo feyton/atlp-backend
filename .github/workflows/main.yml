@@ -31,12 +31,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - run: |
-          touch .env
-          echo TESTING_DB_URL= ${{secrets.TESTING_DB_URL}} >.env
-          echo ACCESS_TOKEN_SECRET= ${{secrets.ACCESS_TOKEN_SECRET}} >.env
-          echo API_BASE= ${{secrets.API_BASE}} >.env
-          cat .env
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
