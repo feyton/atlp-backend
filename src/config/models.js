@@ -1,6 +1,6 @@
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
-import dotenv from "dotenv";
 dotenv.config();
 const jwtRefreshExpiration = process.env.JWT_REFRESH_EXPIRATION;
 

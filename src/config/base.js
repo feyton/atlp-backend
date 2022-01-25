@@ -26,11 +26,12 @@ export const connectDB = async () => {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "media");
+    let folder = "media";
+    cb(null, folder);
   },
   filename: (req, file, cb) => {
-    console.log(req.body);
-    cb(null, req.body.name);
+    let date = new Date().getTime();
+    cb(null, date + "_" + file.originalname);
   },
 });
 
@@ -64,9 +65,10 @@ export const swaggerOptions = {
       },
     ],
   },
-  apis: [
-    "src/**/*.js",
-  ],
+  apis: ["src/**/*.js"],
 };
 
-export const upload = multer({ storage: storage });
+export const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1024 * 1024 * 5 },
+});

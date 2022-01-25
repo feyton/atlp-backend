@@ -2,8 +2,10 @@
 // link on database
 
 import mongoose from "mongoose";
+import path from "path";
 import { slug } from "./md.cjs";
 const { Schema, model } = mongoose;
+const __dirname = path.resolve();
 
 mongoose.plugin(slug);
 
@@ -21,6 +23,18 @@ const commentSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Blog",
       required: true,
+    },
+    body: {
+      type: String,
+      required: true,
+    },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    date: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
@@ -69,8 +83,10 @@ const blogSchema = new Schema(
     meta: {
       votes: Number,
       favs: Number,
+      likes: Number,
+      views: Number,
     },
-    photoURL: String,
+    photoURL: { type: String, default: "avatar/post.jpg" },
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -92,6 +108,10 @@ blogSchema.pre("save", function (next) {
 blogSchema.methods.isAuthor = async function (author) {
   const blog = this;
   return (await blog.author) == author;
+};
+blogSchema.methods.getComments = async function () {
+  const blog = this;
+  return await commentModel.find({ post: blog._id });
 };
 
 const blogModel = model("Blog", blogSchema);

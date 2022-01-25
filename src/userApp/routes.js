@@ -1,9 +1,11 @@
 import { Router } from "express";
+import { upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
 import {
   userSignupValidationRules,
+  userUpdateValidationRules,
   userValidationRules,
   validate,
 } from "./validator.js";
@@ -41,6 +43,7 @@ router.post(
   "/signup",
   userSignupValidationRules(),
   validate,
+  upload.single("image"),
   asyncHandler(views.createUserView)
 );
 
@@ -147,6 +150,9 @@ router.put(
   "/profile/:id",
   verifyJWT,
   checkObjectId,
+  upload.single("image"),
+  userUpdateValidationRules(),
+  validate,
   asyncHandler(views.updateUserView)
 );
 
