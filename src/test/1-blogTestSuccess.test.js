@@ -136,21 +136,20 @@ describe("CRUD Operations on blog", async () => {
         .set("Authorization", "Bearer " + token2);
       expect(postCreation).to.have.status(409);
     });
-    describe("Delete a post you dont own", async () =>
-      it("Should return a forbiden error", async () => {
-        const blogDetail = await chai
-          .request(app)
-          .delete(apiRoute + "/blogs/" + postId)
-          .set("Authorization", "Bearer " + token2);
-        expect(blogDetail).to.have.status(403);
-      }));
-  });
 
-  describe("Return a 403 for an unpublished post ", async () =>
+    it("Should return a forbiden error", async () => {
+      const blogDetail = await chai
+        .request(app)
+        .delete(apiRoute + "/blogs/" + postId)
+        .set("Authorization", "Bearer " + token2);
+      expect(blogDetail).to.have.status(403);
+    });
+
     it("Should fail to return an unpublished post", async () => {
       const blogDetail = await chai
         .request(app)
         .get(apiRoute + "/blogs/" + postId);
       expect(blogDetail).to.have.status(403);
-    }));
+    });
+  });
 });
