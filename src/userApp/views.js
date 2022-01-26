@@ -32,7 +32,11 @@ const loginView = async (req, res, next) => {
 const createUserView = async (req, res, next) => {
   const isTaken = await User.findOne({ email: req.body.email });
   if (isTaken) return resHandler(res, "fail", 409, "Email is taken");
-  const result = await User.create(req.body);
+  let data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+  }
+  const result = await User.create(data);
   const { password, ...others } = result._doc;
   return resHandler(res, "success", 201, {
     message: "Login is required to access protected resources",
@@ -43,7 +47,10 @@ const createUserView = async (req, res, next) => {
 const updateUserView = async (req, res, next) => {
   if (!req.userId === req.params.id)
     return resHandler(res, "fail", 403, "Forbiden access");
-
+  const data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+  }
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
