@@ -31,6 +31,7 @@ const router = Router();
  */
 router.get("/", asyncHandler(views.getBlogsView));
 router.get("/search", asyncHandler(views.blogSearchAdmin));
+router.post("/admin-actions", verifyJWT, asyncHandler(views.blogAdminActions));
 /**
  * @openapi
  * /api/v1/blogs/cat:

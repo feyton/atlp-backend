@@ -1,4 +1,7 @@
-import { responseHandler as resHandler } from "../config/utils.js";
+import {
+  responseHandler as resHandler,
+  responseHandler,
+} from "../config/utils.js";
 import * as models from "./models.js";
 const Blog = models.blogModel;
 const Category = models.categoryModel;
@@ -176,6 +179,34 @@ export const blogSearchAdmin = async (req, res, next) => {
     title: { $regex: term, $options: "i" },
   });
   return resHandler(res, "success", 200, posts);
+};
+export const blogAdminActions = async (req, res, next) => {
+  if (!req.user.roles.Admin) {
+    return resHandler(res, "fail", 403, "Only for Admins");
+  }
+  const action = req.body.action;
+  const items = req.body.ids;
+  switch (action) {
+    case "delete":
+      const deleted = await Blog.deleteMany({ _id: { $in: items } });
+      return responseHandler(res, "success", 200, deleted);
+
+    case "publish":
+      const published = await Blog.updateMany(
+        { _id: { $in: items } },
+        { published: true }
+      );
+      return responseHandler(res, "success", 200, published);
+
+    case "draft":
+      const drafted = await Blog.updateMany(
+        { _id: { $in: items } },
+        { published: false }
+      );
+      return responseHandler(res, "success", 200, drafted);
+    default:
+      return resHandler(res, "success", 200, {});
+  }
 };
 //add your function to export
 export {
