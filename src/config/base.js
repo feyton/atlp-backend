@@ -13,11 +13,13 @@ export const connectDB = async () => {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
+      console.log("Connected to the testing bed");
     } else {
       mongoose.connect(process.env.MONGO_DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
+      console.log("Production link provided");
     }
   } catch (err) {
     console.error(err);

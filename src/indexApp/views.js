@@ -7,6 +7,8 @@ const IndexView = (req, res) => {
   return res.status(307).redirect("/docs");
 };
 
+
+/* c8 ignore start */
 export const getLogs = async (req, res, next) => {
   let options = {
     root: join(__dirname, "logs"),
@@ -31,5 +33,6 @@ export const getLogs = async (req, res, next) => {
     }
   });
 };
+/* c8 ignore stop */
 //add your function to export
 export { IndexView };
