@@ -19,7 +19,6 @@ env:
   ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
   API_BASE: ${{secrets.API_BASE}}
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-
 jobs:
   # This workflow contains a single job called "build"
   build:
