@@ -4,12 +4,12 @@
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
   "scripts": {
-    "test": "set NODE_ENV=test&&mocha ./src/test/ --recursive --timeout 30000",
+    "test": "set NODE_ENV=test&&mocha ./src/test/ --recursive --timeout 30000 --exit",
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "build": "babel src -d lib",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "coverage": "nyc mocha ./src/test/ --coverage --recursive"
+    "coverage": "nyc --coverage && npm run test"
   },
   "repository": {
     "type": "git",

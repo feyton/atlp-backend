@@ -14,9 +14,11 @@ const loginView = async (req, res, next) => {
     email: user.email,
     roles: user.roles,
     _id: user._id,
+    image: user.image,
+    name: user.firstName,
   };
   const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: parseInt(tokenExpiration),
+    expiresIn: "24h",
   });
   let refreshToken = await RefreshToken.createToken(user);
   res.cookie("jwt", refreshToken, {
@@ -124,7 +126,7 @@ const refreshTokenView = async (req, res, next) => {
       roles: userToken.user.roles,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
+    { expiresIn: "24h" }
   );
 
   return resHandler(res, "success", 200, { token: accessToken });
@@ -133,11 +135,11 @@ const refreshTokenView = async (req, res, next) => {
 const logoutWithToken = async (res, accessToken) => {
   let token = accessToken.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-    if (err) return resHandler(res, "fail", 403, "Already logged out");
+    if (err) return resHandler(res, "success", 200, "Logout successful");
 
     const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
     if (!refreshtoken) console.log("Deleted from token");
-    return resHandler(res, "fail", 403, "Already logged out");
+    return resHandler(res, "success", 200, "Log out successful");
   });
 };
 
@@ -145,7 +147,7 @@ const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
   if (!cookies.jwt && !accessToken)
-    return resHandler(res, "fail", 403, "Already signed out");
+    return resHandler(res, "success", 200, "Log out successful");
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
@@ -153,7 +155,7 @@ const logoutView = async (req, res, next) => {
       token: refreshToken,
     }).exec();
     if (!userToken || !accessToken)
-      return resHandler(res, "fail", 403, "Already signed out");
+      return resHandler(res, "success", 200, "Log out successful");
 
     return clearCookie(res);
   }

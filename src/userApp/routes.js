@@ -4,6 +4,7 @@ import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
 import {
   userSignupValidationRules,
+  userUpdateValidationRules,
   userValidationRules,
   validate,
 } from "./validator.js";
@@ -147,6 +148,7 @@ router.put(
   "/profile/:id",
   verifyJWT,
   checkObjectId,
+  userUpdateValidationRules(), validate,
   asyncHandler(views.updateUserView)
 );
 

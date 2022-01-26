@@ -1,6 +1,7 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
+import { upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId } from "../userApp/middleware.js";
 import { verifyJWT } from "../userApp/utils.js";
@@ -97,6 +98,7 @@ router.post(
 router.post(
   "/",
   verifyJWT,
+  upload.single("image"),
   blogCreateValidationRules(),
   validate,
   asyncHandler(views.createBlogView)

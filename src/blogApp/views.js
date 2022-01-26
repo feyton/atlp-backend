@@ -9,6 +9,9 @@ const createBlogView = async (req, res, next) => {
   if (titleExist) return resHandler(res, "fail", 409, "Title already exists");
   let newBlog = req.body;
   newBlog["author"] = req.userId;
+  if (req.file) {
+    newBlog["photoURL"] = req.file.path;
+  }
 
   const result = await Blog.create(newBlog);
   if (!result)
@@ -46,7 +49,15 @@ const updateBlogView = async (req, res, next) => {
     const newData = await Blog.populate(updatedBlog, {
       path: "author",
       model: "User",
-      select: ["_id", "firstName", "lastName", "profilePicture"],
+      select: [
+        "_id",
+        "firstName",
+        "lastName",
+        "image",
+        "bio",
+        "facebook",
+        "twitter",
+      ],
     });
 
     return resHandler(res, "success", 201, newData);
@@ -62,6 +73,7 @@ const updateBlogView = async (req, res, next) => {
 const deleteBlogView = async (req, res, next) => {
   const user = req.userId;
   const blog = await Blog.findById(req.params.id);
+  console.log(req.user.roles.Admin);
 
   if (!blog) {
     return resHandler(res, "fail", 404, "Resource not found");
@@ -88,7 +100,10 @@ const getBlogDetailView = async (req, res, next) => {
     "_id",
     "firstName",
     "lastName",
-    "profilePicture",
+    "image",
+    "facebook",
+    "twitter",
+    "bio",
   ]);
   if (!blog) {
     return resHandler(res, "fail", 404, "Resource not found");
