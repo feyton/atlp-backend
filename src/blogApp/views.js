@@ -119,14 +119,39 @@ const getBlogDetailView = async (req, res, next) => {
 };
 
 const getBlogsView = async (req, res, next) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 5;
+  const customLabels = {
+    docs: "posts",
+  };
+  const options = {
+    page: page,
+    limit: limit,
+    sort: { date: -1 },
+    populate: {
+      path: "author",
+      model: "User",
+      select: [
+        "_id",
+        "firstName",
+        "lastName",
+        "image",
+        "bio",
+        "facebook",
+        "twitter",
+      ],
+    },
+    customLabels: customLabels,
+  };
+
   let posts;
 
-  posts = await Blog.find({ published: true }).populate("author", [
-    "firstName",
-    "lastName",
-    "profilePicture",
-    "_id",
-  ]);
+  posts = await Blog.paginate({ published: true }, options, (err, result) => {
+    return result;
+  });
+  if (!req.query.page) {
+    resHandler(res, "success", 200, posts.posts);
+  }
   return resHandler(res, "success", 200, posts);
 };
 
@@ -140,6 +165,18 @@ const createCategoryView = async (req, res, next) => {
   return resHandler(res, "success", 200, result);
 };
 
+export const blogSearchAdmin = async (req, res, next) => {
+  const term = req.query.q;
+  console.log(term);
+  if (!term) {
+    return resHandler(res, "fail", 404, "Not found");
+  }
+  const posts = await Blog.find({
+    published: true,
+    title: { $regex: term, $options: "i" },
+  });
+  return resHandler(res, "success", 200, posts);
+};
 //add your function to export
 export {
   getBlogDetailView,

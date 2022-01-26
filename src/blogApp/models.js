@@ -2,6 +2,7 @@
 // link on database
 
 import mongoose from "mongoose";
+import mongoosePaginator from "mongoose-paginate-v2";
 import path from "path";
 import { slug } from "./md.cjs";
 const { Schema, model } = mongoose;
@@ -113,6 +114,7 @@ blogSchema.methods.getComments = async function () {
   const blog = this;
   return await commentModel.find({ post: blog._id });
 };
+blogSchema.plugin(mongoosePaginator);
 
 const blogModel = model("Blog", blogSchema);
 const categoryModel = model("Category", categorySchema);

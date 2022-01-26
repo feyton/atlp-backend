@@ -30,6 +30,7 @@ const router = Router();
  *             $ref: "#/components/responses/serverError"
  */
 router.get("/", asyncHandler(views.getBlogsView));
+router.get("/search", asyncHandler(views.blogSearchAdmin));
 /**
  * @openapi
  * /api/v1/blogs/cat:
