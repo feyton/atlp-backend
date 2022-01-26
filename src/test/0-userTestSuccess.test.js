@@ -3,8 +3,6 @@ import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
 import { apiRoute, app } from "../index.js";
 import { userModel } from "../userApp/models.js";
-import { userSignupValidationRules, validate } from "../userApp/validator.js";
-
 
 chai.use(chaiHttp);
 
