@@ -8,9 +8,7 @@
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "cover": "c8 --check-coverage npm t",
-    "coverage": "nyc npm test && nyc report --reporter=lcov --reporter=html --reporter=text-lcov | coveralls",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
+    "coverage": "c8 --check-coverage npm t"
   },
   "repository": {
     "type": "git",
