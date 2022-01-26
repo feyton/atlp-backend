@@ -1,4 +1,4 @@
-import { responseHandler } from "../config/utils.js";
+import { responseHandler as resHandler } from "../config/utils.js";
 import * as models from "./models.js";
 const Blog = models.blogModel;
 const Category = models.categoryModel;
@@ -6,20 +6,17 @@ const Category = models.categoryModel;
 const createBlogView = async (req, res, next) => {
   const titleExist = await Blog.findOne({ title: req.body.title });
 
-  if (titleExist)
-    return responseHandler(res, "fail", 409, "Title already exists");
+  if (titleExist) return resHandler(res, "fail", 409, "Title already exists");
   let newBlog = req.body;
   newBlog["author"] = req.userId;
+  if (req.file) {
+    newBlog["photoURL"] = req.file.path;
+  }
 
   const result = await Blog.create(newBlog);
   if (!result)
-    return responseHandler(
-      res,
-      "error",
-      500,
-      "Unable to connect to the database"
-    );
-  return responseHandler(res, "success", 201, result);
+    return resHandler(res, "error", 500, "Unable to connect to the database");
+  return resHandler(res, "success", 201, result);
 };
 
 const updateBlogView = async (req, res, next) => {
@@ -27,7 +24,7 @@ const updateBlogView = async (req, res, next) => {
     const author = req.userId;
     const blogPost = await Blog.findById(req.params.id);
     if (!blogPost) {
-      return responseHandler(
+      return resHandler(
         res,
         "fail",
         404,
@@ -36,8 +33,8 @@ const updateBlogView = async (req, res, next) => {
     }
     const isAuthor = await blogPost.isAuthor(author);
 
-    if (!isAuthor && author.roles.Admin == "") {
-      return responseHandler(
+    if (!isAuthor && !author.roles.Admin) {
+      return resHandler(
         res,
         "fail",
         403,
@@ -52,13 +49,21 @@ const updateBlogView = async (req, res, next) => {
     const newData = await Blog.populate(updatedBlog, {
       path: "author",
       model: "User",
-      select: ["_id", "firstName", "lastName", "profilePicture"],
+      select: [
+        "_id",
+        "firstName",
+        "lastName",
+        "image",
+        "bio",
+        "facebook",
+        "twitter",
+      ],
     });
 
-    return responseHandler(res, "success", 201, newData);
+    return resHandler(res, "success", 201, newData);
   } catch (err) {
     if (err.code == 11000) {
-      return responseHandler(res, "fail", 409, {
+      return resHandler(res, "fail", 409, {
         title: "This title already exists with a different id",
       });
     }
@@ -66,48 +71,51 @@ const updateBlogView = async (req, res, next) => {
 };
 
 const deleteBlogView = async (req, res, next) => {
-  try {
-    const user = req.userId;
-    const blog = await Blog.findById(req.params.id);
+  const user = req.userId;
+  const blog = await Blog.findById(req.params.id);
+  console.log(req.user.roles.Admin);
 
-    if (!blog) {
-      return responseHandler(res, "fail", 404, "Resource not found");
-    }
-    if (!blog.author == user && !req.user.roles.Admin) {
-      return responseHandler(
-        res,
-        "fail",
-        403,
-        "You don't have access to the requested resource"
-      );
-
-    }
-
-    await blog.delete();
-
-    return responseHandler(res, "success", 200, {});
-  } catch (error) {
-    return responseHandler(res, "error", 500, "Something happened on our end");
+  if (!blog) {
+    return resHandler(res, "fail", 404, "Resource not found");
   }
+
+  const isAuthor = await blog.isAuthor(user);
+
+  if (!isAuthor && !req.user.roles.Admin) {
+    return resHandler(
+      res,
+      "fail",
+      403,
+      "You don't have access to the requested resource"
+    );
+  }
+
+  await blog.delete();
+
+  return resHandler(res, "success", 200, {});
 };
 
 const getBlogDetailView = async (req, res, next) => {
-
   const blog = await Blog.findById(req.params.id).populate("author", [
     "_id",
     "firstName",
     "lastName",
-    "profilePicture",
+    "image",
+    "facebook",
+    "twitter",
+    "bio",
   ]);
   if (!blog) {
-    return responseHandler(res, "fail", 404, "Resource not found");
-
-  }
-  if (!blog.published && !blog.isAuthor(req.userId)) {
-    return responseHandler(res, "fail", 404, "Resource not found");
+    return resHandler(res, "fail", 404, "Resource not found");
+    //TODO Add the ability for admin to view unpublished blogs
   }
 
-  return responseHandler(res, "success", 200, blog);
+  if (!blog.published) {
+    req.postID = blog._id;
+    return resHandler(res, "fail", 403, "You don't have access");
+  }
+
+  return resHandler(res, "success", 200, blog);
 };
 
 const getBlogsView = async (req, res, next) => {
@@ -119,17 +127,17 @@ const getBlogsView = async (req, res, next) => {
     "profilePicture",
     "_id",
   ]);
-  return responseHandler(res, "success", 200, posts);
+  return resHandler(res, "success", 200, posts);
 };
 
 // Category Views
 const createCategoryView = async (req, res, next) => {
   const exists = await Category.findOne({ title: req.body.title }).exec();
   if (exists) {
-    return responseHandler(res, "fail", 409, "The category already exists");
+    return resHandler(res, "fail", 409, "The category already exists");
   }
   const result = await Category.create(req.body);
-  return responseHandler(res, "success", 200, result);
+  return resHandler(res, "success", 200, result);
 };
 
 //add your function to export

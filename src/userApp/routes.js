@@ -1,9 +1,11 @@
 import { Router } from "express";
+import { upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
 import {
   userSignupValidationRules,
+  userUpdateValidationRules,
   userValidationRules,
   validate,
 } from "./validator.js";
@@ -39,6 +41,7 @@ const router = Router();
 
 router.post(
   "/signup",
+  upload.single("image"),
   userSignupValidationRules(),
   validate,
   asyncHandler(views.createUserView)
@@ -147,6 +150,9 @@ router.put(
   "/profile/:id",
   verifyJWT,
   checkObjectId,
+  upload.single("image"),
+  userUpdateValidationRules(),
+  validate,
   asyncHandler(views.updateUserView)
 );
 
@@ -176,7 +182,7 @@ router.put(
  *                password:
  *                  type: string
  *                  example: Atlp@20220
- *                  
+ *
  *     responses:
  *       200:
  *           $ref: "#/components/responses/successResponse"
@@ -215,7 +221,7 @@ router.delete(
  *
  */
 
-router.post("/logout", verifyJWT, asyncHandler(views.logoutView));
+router.post("/logout", asyncHandler(views.logoutView));
 
 //write your routes here
 

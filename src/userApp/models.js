@@ -23,6 +23,7 @@ const userSchema = new Schema(
       lowercase: true,
       unique: true,
       required: "Email address is required",
+      immutable: true,
     },
     roles: {
       User: {
@@ -37,9 +38,21 @@ const userSchema = new Schema(
       required: true,
     },
     provider: String,
-    profilePicture: {
+    image: {
       type: String,
-      default: "",
+      default: "avatar/profile.svg",
+    },
+    bio: {
+      type: String,
+      default: "This is our author biography",
+    },
+    facebook: {
+      type: String,
+      default: "https://www.facebook.com/feytonf",
+    },
+    twitter: {
+      type: String,
+      default: "https://twitter.com/feytonf",
     },
   },
   {

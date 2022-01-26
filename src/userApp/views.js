@@ -1,155 +1,107 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { RefreshToken } from "../config/models.js";
-import { responseHandler } from "../config/utils.js";
-import * as models from "./models.js";
-import { catchError } from "./utils.js";
+import { responseHandler as resHandler } from "../config/utils.js";
+import { userModel as User } from "./models.js";
+import { clearCookie } from "./utils.js";
 dotenv.config();
 
-const User = models.userModel;
 let tokenExpiration = process.env.JWT_EXPIRATION;
 
 const loginView = async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email }).exec();
-
   let userInfo = {
     email: user.email,
     roles: user.roles,
     _id: user._id,
+    image: user.image,
+    name: user.firstName,
   };
   const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: parseInt(tokenExpiration),
+    expiresIn: "24h",
   });
   let refreshToken = await RefreshToken.createToken(user);
   res.cookie("jwt", refreshToken, {
     httpOnly: true,
-    maxAge: 72 * 60 * 60 * 1000,
+    maxAge: 60 * 60 * 60 * 24 * 7,
   });
   userInfo["token"] = accessToken;
-  return responseHandler(res, "success", 200, userInfo);
+  return resHandler(res, "success", 200, userInfo);
 };
 
 const createUserView = async (req, res, next) => {
   const isTaken = await User.findOne({ email: req.body.email });
-  if (isTaken) return responseHandler(res, "fail", 409, "Email is taken");
-  const result = await User.create(req.body);
+  if (isTaken) return resHandler(res, "fail", 409, "Email is taken");
+  let data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+  }
+  const result = await User.create(data);
   const { password, ...others } = result._doc;
-  return responseHandler(res, "success", 201, {
+  return resHandler(res, "success", 201, {
     message: "Login is required to access protected resources",
     user: others,
   });
 };
 
 const updateUserView = async (req, res, next) => {
-  if (req.userId === req.params.id) {
-    try {
-      const updatedUser = await User.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-      );
-      const { password, ...others } = updatedUser._doc;
-      return responseHandler(res, "success", 201, others);
-    } catch (error) {
-      return responseHandler(
-        res,
-        "error",
-        500,
-        "Unable to process your request"
-      );
-    }
-  } else {
-    return responseHandler(
-      res,
-      "fail",
-      403,
-      "You don't have access to the requested resource"
-    );
+  if (!req.userId === req.params.id)
+    return resHandler(res, "fail", 403, "Forbiden access");
+  const data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
   }
+  const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  const { password, ...others } = updatedUser._doc;
+  return resHandler(res, "success", 200, others);
 };
 
 const deleteUserView = async (req, res, next) => {
-  if (req.userId === req.params.id) {
-    try {
-      let { password } = req.body;
-      if (!password)
-        return responseHandler(res, "fail", 400, {
-          password: "Password is required to delete user",
-        });
+  if (!req.userId === req.params.id)
+    return resHandler(res, "fail", 403, "Forbiden access");
+  let { password } = req.body;
+  if (!password)
+    return resHandler(res, "fail", 400, {
+      password: "Password is required",
+    });
 
-      const user = await User.findById(req.params.id);
-      if (!user)
-        return responseHandler(
-          res,
-          "fail",
-          404,
-          "Requested resource can not be found"
-        );
+  const user = await User.findById(req.params.id);
+  if (!user)
+    return resHandler(res, "fail", 404, "Requested resource can not be found");
 
-      const isPasswordValid = await user.comparePassword(password);
-      if (!isPasswordValid) {
-        return responseHandler(res, "fail", 400, "Invalid credentials");
-      }
-
-      user.delete();
-      res.clearCookie("jwt", { httpOnly: true });
-
-      return responseHandler(res, "success", 200, {});
-    } catch (error) {
-      return responseHandler(
-        res,
-        "error",
-        500,
-        "Something went wrong on our end"
-      );
-    }
-  } else {
-    return responseHandler(
-      res,
-      "fail",
-      403,
-      "You don't have access to the requested resource"
-    );
+  const isPasswordValid = await user.comparePassword(password);
+  if (!isPasswordValid) {
+    return resHandler(res, "fail", 400, "Invalid credentials");
   }
+
+  const deleteUser = await user.delete();
+  return clearCookie(res);
 };
 
 const getUserView = async (req, res, next) => {
-  if (req.userId === req.params.id) {
-    try {
-      const user = await User.findById(req.params.id);
-      if (!user)
-        return responseHandler(
-          res,
-          "fail",
-          404,
-          "The requested resource can not be found"
-        );
+  if (!req.userId === req.params.id)
+    return resHandler(res, "fail", 403, "Forbiden access");
 
-      let { password, ...userInfo } = user._doc;
-
-      return responseHandler(res, "success", 200, userInfo);
-    } catch (error) {
-      return responseHandler(
-        res,
-        "error",
-        500,
-        "Unable to connect to the database"
-      );
-    }
-  } else {
-    return responseHandler(
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return resHandler(
       res,
       "fail",
-      403,
-      "You don't have access to the requested resource"
+      404,
+      "The requested resource can not be found"
     );
   }
+  let { password, ...userInfo } = user._doc;
+
+  return resHandler(res, "success", 200, userInfo);
 };
 
 const refreshTokenView = async (req, res, next) => {
   const cookies = req.cookies;
   if (!cookies || !cookies.jwt)
-    return responseHandler(
+    return resHandler(
       res,
       "fail",
       401,
@@ -161,18 +113,13 @@ const refreshTokenView = async (req, res, next) => {
     token: refreshToken,
   }).populate("user");
   if (!userToken) {
-    return responseHandler(
-      res,
-      "fail",
-      403,
-      "Refresh token is not in the database"
-    );
+    return resHandler(res, "fail", 403, "Refresh token is not in the database");
   }
 
   if (RefreshToken.verifyExpiration(userToken)) {
     await RefreshToken.findByIdAndDelete(userToken._id).exec();
     res.clearCookie("jwt", { httpOnly: true });
-    return responseHandler(
+    return resHandler(
       res,
       "fail",
       403,
@@ -186,57 +133,41 @@ const refreshTokenView = async (req, res, next) => {
       roles: userToken.user.roles,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
+    { expiresIn: "24h" }
   );
 
-  return responseHandler(res, "success", 200, { token: accessToken });
+  return resHandler(res, "success", 200, { token: accessToken });
+};
+
+const logoutWithToken = async (res, accessToken) => {
+  let token = accessToken.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
+    if (err) return resHandler(res, "success", 200, "Logout successful");
+
+    const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
+    if (!refreshtoken) console.log("Deleted from token");
+    return resHandler(res, "success", 200, "Log out successful");
+  });
 };
 
 const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
-  if (!cookies || (!cookies.jwt && !accessToken))
-    return responseHandler(res, "fail", 403, "Already signed out");
+  if (!cookies.jwt && !accessToken)
+    return resHandler(res, "success", 200, "Log out successful");
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
-    const userToken = await RefreshToken.findOne({
+    const userToken = await RefreshToken.findOneAndDelete({
       token: refreshToken,
     }).exec();
-    if (userToken) {
-      await RefreshToken.findByIdAndDelete(userToken._id);
-      res.cookie("jwt", "", { httpOnly: true, maxAge: 1 });
-      return responseHandler(res, "success", 200, {});
-    }
-    if (!userToken && !accessToken) {
-      return responseHandler(res, "fail", 403, "Already signed out");
-    }
-  }
-  if (accessToken) {
-    jwt.verify(
-      accessToken,
-      process.env.ACCESS_TOKEN_SECRET,
-      async (err, decoded) => {
-        if (err) {
-          return catchError(err, res);
-        }
-        const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
-        if (!refreshtoken) {
-          return responseHandler(
-            res,
-            "fail",
-            403,
-            "Forbiden! You are already logged out"
-          );
-        }
-        return responseHandler(res, "success", 200, {});
-      }
-    );
+    if (!userToken || !accessToken)
+      return resHandler(res, "success", 200, "Log out successful");
+
+    return clearCookie(res);
   }
 
-  await RefreshToken.findByIdAndDelete(userToken._id);
-  res.clearCookie("jwt", { httpOnly: true });
-  return responseHandler(res, "success", 200, {});
+  return logoutWithToken(res, accessToken);
 };
 //add your function to export
 export {

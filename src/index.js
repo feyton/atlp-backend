@@ -10,10 +10,8 @@ import swaggerUi from "swagger-ui-express";
 import {
   connectDB,
   optionsToCustomizeSwagger,
-
   swaggerOptions,
 } from "./config/base.js";
-
 import { errLogger, logger } from "./config/utils.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 import { IndexView } from "./indexApp/views.js";
@@ -31,6 +29,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(staticExpress(join(__dirname, "public")));
+app.use("/media", staticExpress(join(__dirname, "media")));
 
 app.use(
   "/docs",
@@ -54,9 +53,8 @@ const PORT = process.env.PORT || 3500;
 mongoose.connection.once("open", () => {
   console.log("Mongoose connected");
   app.listen(PORT, () => {
-    console.log("Server started: ", PORT, apiRoute);
+    console.log("Server started: ", PORT);
   });
 });
 
 export { app, apiRoute };
-

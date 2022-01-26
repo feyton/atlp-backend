@@ -61,7 +61,7 @@ describe("CRUD Operations on the user module", async () => {
         .put(apiRoute + "/accounts/profile/" + userId)
         .send(updatedUser)
         .set("Authorization", "Bearer " + token);
-      expect(result).to.have.status(201);
+      expect(result).to.have.status(200);
       expect(result.body).to.have.property("data");
       expect(result.body.data).to.have.property("firstName").to.eql("New name");
     });

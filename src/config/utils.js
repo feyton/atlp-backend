@@ -5,19 +5,13 @@ import path, { join } from "path";
 import { v4 as uuid } from "uuid";
 
 export const responseHandler = (res, status, code, message) => {
+  let response = { status: status, code: code };
   if (typeof message == "string") {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      message: message,
-    });
+    response["message"] = message;
   } else {
-    return res.status(code).json({
-      status: status,
-      code: code,
-      data: message,
-    });
+    response["data"] = message;
   }
+  return res.status(code).json(response);
 };
 
 const __dirname = path.resolve();

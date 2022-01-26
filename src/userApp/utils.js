@@ -48,4 +48,10 @@ export const verifyJWT = (req, res, next) => {
   });
 };
 
-
+export const clearCookie = (res) => {
+  return res.cookie("jwt", "", { httpOnly: true, maxAge: 1 }).status(200).json({
+    status: "success",
+    code: 200,
+    data: {},
+  });
+};

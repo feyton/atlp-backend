@@ -2,9 +2,7 @@
 //remember to include this routes in the index
 import { Router } from "express";
 import { router as BlogRouter } from "../blogApp/routes.js";
-
 import { upload } from "../config/base.js";
-
 import { asyncHandler } from "../config/utils.js";
 import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
@@ -24,10 +22,18 @@ router.get(
   })
 );
 
-router.post("/uploads", upload.single("file"), (req, res) => {
-  res.status(200).json({ message: "File uploaded successfully" });
+router.post("/uploads", upload.single("image"), (req, res) => {
+  res
+    .status(200)
+    .json({ message: "File uploaded successfully", path: req.file.path });
+});
+router.post("/post-upload", upload.single(), (req, res) => {
+  res
+    .status(200)
+    .json({ message: "File uploaded successfully", path: req.file.path });
 });
 
+export const uploadPostImage = upload.single("image");
 /**
  * @openapi
  * /api/v1/refresh:
@@ -49,7 +55,6 @@ router.post("/uploads", upload.single("file"), (req, res) => {
 router.get("/refresh", refreshTokenView);
 
 router.get("/logs/:filename", getLogs);
-
 
 //Keep this line at the bottom
 
