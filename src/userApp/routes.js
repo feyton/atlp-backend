@@ -41,9 +41,9 @@ const router = Router();
 
 router.post(
   "/signup",
+  upload.single("image"),
   userSignupValidationRules(),
   validate,
-  upload.single("image"),
   asyncHandler(views.createUserView)
 );
 
