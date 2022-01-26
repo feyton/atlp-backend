@@ -4,7 +4,7 @@
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require babel-core/register ./src/test/ --recursive --timeout 30000  --exit ",
+    "test": "cross-env NODE_ENV=test mocha --require babel-core/register ./src/test/ --recursive --timeout 30000  --exit ",
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "babelBuild": "babel src -d lib && node ./lib/index",
