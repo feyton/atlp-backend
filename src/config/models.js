@@ -29,7 +29,6 @@ RefreshTokenSchema.statics.createToken = async function (user) {
 };
 
 RefreshTokenSchema.statics.verifyExpiration = function (token) {
-  console.log(token.expiryDate.getTime() < new Date().getTime());
   return token.expiryDate.getTime() < new Date().getTime();
 };
 

@@ -1,7 +1,7 @@
 //Use this file to specify the routes for the app
 //remember to include this routes in the index
 import { Router } from "express";
-import { upload } from "../config/base.js";
+import { cloudinaryMiddleware, upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId } from "../userApp/middleware.js";
 import { verifyJWT } from "../userApp/utils.js";
@@ -9,6 +9,7 @@ import { validate } from "../userApp/validator.js";
 import {
   blogCreateValidationRules,
   blogUpdateValidationRules,
+  commentValidation,
   createCategoryValidationRules,
 } from "./validator.js";
 import * as views from "./views.js";
@@ -30,6 +31,18 @@ const router = Router();
  *             $ref: "#/components/responses/serverError"
  */
 router.get("/", asyncHandler(views.getBlogsView));
+router.get("/search", asyncHandler(views.blogSearchAdmin));
+router.post("/admin-actions", verifyJWT, asyncHandler(views.blogAdminActions));
+router.get("/admin", verifyJWT, asyncHandler(views.getBlogsViewAdmin));
+router.post(
+  "/comment/:id",
+  checkObjectId,
+  verifyJWT,
+  commentValidation(),
+  validate,
+  views.addCommentView
+);
+router.get("/comment/:id", checkObjectId, verifyJWT, views.handleCommentAction);
 /**
  * @openapi
  * /api/v1/blogs/cat:
@@ -101,6 +114,7 @@ router.post(
   upload.single("image"),
   blogCreateValidationRules(),
   validate,
+  cloudinaryMiddleware,
   asyncHandler(views.createBlogView)
 );
 
@@ -161,8 +175,10 @@ router.put(
   "/:id",
   verifyJWT,
   checkObjectId,
+  upload.single("image"),
   blogUpdateValidationRules(),
   validate,
+  cloudinaryMiddleware,
   asyncHandler(views.updateBlogView)
 );
 

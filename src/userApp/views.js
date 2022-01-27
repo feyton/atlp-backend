@@ -6,8 +6,6 @@ import { userModel as User } from "./models.js";
 import { clearCookie } from "./utils.js";
 dotenv.config();
 
-let tokenExpiration = process.env.JWT_EXPIRATION;
-
 const loginView = async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email }).exec();
   let userInfo = {
@@ -32,7 +30,12 @@ const loginView = async (req, res, next) => {
 const createUserView = async (req, res, next) => {
   const isTaken = await User.findOne({ email: req.body.email });
   if (isTaken) return resHandler(res, "fail", 409, "Email is taken");
-  const result = await User.create(req.body);
+  let data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
+  const result = await User.create(data);
   const { password, ...others } = result._doc;
   return resHandler(res, "success", 201, {
     message: "Login is required to access protected resources",
@@ -43,7 +46,11 @@ const createUserView = async (req, res, next) => {
 const updateUserView = async (req, res, next) => {
   if (!req.userId === req.params.id)
     return resHandler(res, "fail", 403, "Forbiden access");
-
+  const data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
@@ -66,7 +73,7 @@ const deleteUserView = async (req, res, next) => {
 
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return resHandler(res, "fail", 400, "Invalid credentials");
+    return resHandler(res, "fail", 400, { message: "Invalid credentials" });
   }
 
   const deleteUser = await user.delete();

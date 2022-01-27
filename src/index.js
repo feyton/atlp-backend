@@ -8,6 +8,7 @@ import path, { join } from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import {
+  cloudinaryConfig,
   connectDB,
   optionsToCustomizeSwagger,
   swaggerOptions,
@@ -28,6 +29,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use("*", cloudinaryConfig);
 app.use(staticExpress(join(__dirname, "public")));
 app.use("/media", staticExpress(join(__dirname, "media")));
 

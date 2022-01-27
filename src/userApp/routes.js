@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { cloudinaryMiddleware, upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
@@ -40,8 +41,10 @@ const router = Router();
 
 router.post(
   "/signup",
+  upload.single("image"),
   userSignupValidationRules(),
   validate,
+  cloudinaryMiddleware,
   asyncHandler(views.createUserView)
 );
 
@@ -148,7 +151,10 @@ router.put(
   "/profile/:id",
   verifyJWT,
   checkObjectId,
-  userUpdateValidationRules(), validate,
+  upload.single("image"),
+  userUpdateValidationRules(),
+  validate,
+  cloudinaryMiddleware,
   asyncHandler(views.updateUserView)
 );
 

@@ -1,9 +1,13 @@
-import { responseHandler as resHandler } from "../config/utils.js";
+import {
+  responseHandler as resHandler,
+  responseHandler,
+} from "../config/utils.js";
 import * as models from "./models.js";
 const Blog = models.blogModel;
 const Category = models.categoryModel;
+const commentModel = models.commentModel;
 
-const createBlogView = async (req, res, next) => {
+export const createBlogView = async (req, res, next) => {
   const titleExist = await Blog.findOne({ title: req.body.title });
 
   if (titleExist) return resHandler(res, "fail", 409, "Title already exists");
@@ -11,6 +15,10 @@ const createBlogView = async (req, res, next) => {
   newBlog["author"] = req.userId;
   if (req.file) {
     newBlog["photoURL"] = req.file.path;
+    newBlog["imageID"] = req.file.public_id;
+  }
+  if (!req.user.roles.Admin) {
+    newBlog["published"] = false;
   }
 
   const result = await Blog.create(newBlog);
@@ -19,7 +27,7 @@ const createBlogView = async (req, res, next) => {
   return resHandler(res, "success", 201, result);
 };
 
-const updateBlogView = async (req, res, next) => {
+export const updateBlogView = async (req, res, next) => {
   try {
     const author = req.userId;
     const blogPost = await Blog.findById(req.params.id);
@@ -70,7 +78,7 @@ const updateBlogView = async (req, res, next) => {
   }
 };
 
-const deleteBlogView = async (req, res, next) => {
+export const deleteBlogView = async (req, res, next) => {
   const user = req.userId;
   const blog = await Blog.findById(req.params.id);
   console.log(req.user.roles.Admin);
@@ -95,7 +103,9 @@ const deleteBlogView = async (req, res, next) => {
   return resHandler(res, "success", 200, {});
 };
 
-const getBlogDetailView = async (req, res, next) => {
+export const getBlogDetailView = async (req, res, next) => {
+  const edit = req.query.edit;
+
   const blog = await Blog.findById(req.params.id).populate("author", [
     "_id",
     "firstName",
@@ -114,19 +124,63 @@ const getBlogDetailView = async (req, res, next) => {
     req.postID = blog._id;
     return resHandler(res, "fail", 403, "You don't have access");
   }
+  if (edit && edit == "true") {
+    return resHandler(res, "success", 200, blog);
+  }
+  const comments = await blog.getComments();
 
-  return resHandler(res, "success", 200, blog);
+  return resHandler(res, "success", 200, { blog, comments });
 };
 
-const getBlogsView = async (req, res, next) => {
-  let posts;
+export const getBlogsView = async (req, res, next) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 5;
+  const customLabels = {
+    docs: "posts",
+  };
+  const options = {
+    page: page,
+    limit: limit,
+    sort: { date: -1 },
+    customLabels: customLabels,
+  };
 
-  posts = await Blog.find({ published: true }).populate("author", [
-    "firstName",
-    "lastName",
-    "profilePicture",
-    "_id",
-  ]);
+  let posts;
+  posts = await Blog.paginate({ published: true }, options, (err, result) => {
+    return result;
+  });
+  if (!req.query.page) {
+    return resHandler(res, "success", 200, posts.posts);
+  }
+  return resHandler(res, "success", 200, posts);
+};
+export const getBlogsViewAdmin = async (req, res, next) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+  const customLabels = {
+    docs: "posts",
+  };
+  const options = {
+    page: page,
+    limit: limit,
+    sort: { date: -1 },
+    customLabels: customLabels,
+  };
+
+  let posts;
+  if (!req.user.roles.Admin) {
+    posts = await Blog.paginate(
+      { author: req.userID },
+      options,
+      (err, result) => {
+        return result;
+      }
+    );
+  } else {
+    posts = await Blog.paginate({}, options, (err, result) => {
+      return result;
+    });
+  }
   return resHandler(res, "success", 200, posts);
 };
 
@@ -140,12 +194,81 @@ const createCategoryView = async (req, res, next) => {
   return resHandler(res, "success", 200, result);
 };
 
-//add your function to export
-export {
-  getBlogDetailView,
-  createBlogView,
-  deleteBlogView,
-  updateBlogView,
-  getBlogsView,
-  createCategoryView,
+export const blogSearchAdmin = async (req, res, next) => {
+  const term = req.query.q;
+  if (!term) {
+    return resHandler(res, "fail", 404, "Not found");
+  }
+  const posts = await Blog.find({
+    published: true,
+    $or: [
+      { title: { $regex: term, $options: "i" } },
+      { content: { $regex: term, $options: "i" } },
+    ],
+  });
+  return resHandler(res, "success", 200, posts);
 };
+export const blogAdminActions = async (req, res, next) => {
+  if (!req.user.roles.Admin) {
+    return resHandler(res, "fail", 403, "Only for Admins");
+  }
+  const action = req.body.action;
+  let items = req.body.idList;
+  items = JSON.parse(items);
+  if (!action || !items) {
+    return resHandler(res, "fail", 400, { message: "parameter not provided" });
+  }
+  if (action == "publish") {
+    const published = await Blog.updateMany(
+      { _id: { $in: items } },
+      { published: true }
+    );
+    return responseHandler(res, "success", 200, published);
+  } else if (action == "delete") {
+    const deleted = await Blog.deleteMany({ _id: { $in: items } });
+    return responseHandler(res, "success", 200, deleted);
+  } else if (action == "draft") {
+    const drafted = await Blog.updateMany(
+      { _id: { $in: items } },
+      { published: false }
+    );
+    return responseHandler(res, "success", 200, drafted);
+  }
+};
+
+export const addCommentView = async (req, res, next) => {
+  const post = await Blog.findOne({ id_: req.params.id, published: true });
+  if (!post) {
+    return resHandler(
+      res,
+      "fail",
+      403,
+      "You don't have access to the requested resource"
+    );
+  }
+  let comment = req.body;
+  comment["author"] = req.userId;
+  comment["post"] = post._id;
+  const newComment = await commentModel.create(comment);
+
+  if (newComment) {
+    return resHandler(res, "success", 201, newComment);
+  }
+  return resHandler(res, "error");
+};
+export const handleCommentAction = async (req, res, next) => {
+  const action = req.query.action;
+  let comment = await commentModel.findById(req.params.id);
+  if (!action) {
+    return resHandler(res, "fail", 400, { message: "Missing action" });
+  }
+  if (action == "like") {
+    const liked = await comment.addLike();
+    if (liked) {
+      return resHandler(res, "success", 200, {});
+    }
+  } else {
+    return resHandler(res, "fail", 400, { message: "Unknown action" });
+  }
+};
+//add your function to export
