@@ -47,3 +47,9 @@ export const createCategoryValidationRules = () => {
     body("description", "Description is required").notEmpty(),
   ];
 };
+
+export const commentValidation = () => {
+  return [
+    body("body", "A comment body is required").isLength({ min: 10, max: 200 }),
+  ];
+};

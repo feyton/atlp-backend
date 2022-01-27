@@ -31,7 +31,6 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use("*", cloudinaryConfig);
 app.use(staticExpress(join(__dirname, "public")));
-app.use("/media", staticExpress(join(__dirname, "media")));
 
 app.use(
   "/docs",

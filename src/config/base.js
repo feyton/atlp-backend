@@ -1,10 +1,10 @@
 // const DatauriParser = require("datauri/parser");
 import { config, uploader } from "cloudinary";
-import { parser } from "../blogApp/md.cjs";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
+import { parser } from "../blogApp/md.cjs";
 dotenv.config();
 const serverUrl = process.env.SERVER_URL || "http://127.0.0.1:3500";
 const serverName = process.env.SERVER_NAME || "LOCAL HOST";
@@ -17,13 +17,13 @@ export const connectDB = async () => {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
-      console.log("Connected to the testing bed");
+      console.log("Connected to the testing database");
     } else {
       mongoose.connect(process.env.MONGO_DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
-      console.log("Production link provided");
+      console.log("Connected to the cloud");
     }
   } catch (err) {
     console.error(err);
@@ -69,8 +69,6 @@ export const upload = multer({
   storage,
 });
 
-
-
 const cloudinaryConfig = (req, res, next) => {
   config({
     cloud_name: process.env.cloud_name,
@@ -84,16 +82,23 @@ export { cloudinaryConfig, uploader };
 
 export const cloudinaryMiddleware = async (req, res, next) => {
   if (req.file) {
-    const file =  parser.format(path.extname(req.file.originalname).toString(), req.file.buffer).content;
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      req.file.buffer
+    ).content;
     const result = await uploader.upload(file);
     if (!result) {
-      console.log("Error happened");
+      next();
     }
     const imageUrl = result.url;
     req.file.path = imageUrl;
-    console.log(imageUrl, result);
+    req.file.public_id = result.public_id;
     next();
   } else {
     next();
   }
+};
+
+export const deleteAsset = async (id) => {
+  const deleted = await uploader.destroy(id);
 };

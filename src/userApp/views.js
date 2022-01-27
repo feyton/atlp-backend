@@ -6,8 +6,6 @@ import { userModel as User } from "./models.js";
 import { clearCookie } from "./utils.js";
 dotenv.config();
 
-let tokenExpiration = process.env.JWT_EXPIRATION;
-
 const loginView = async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email }).exec();
   let userInfo = {
@@ -35,6 +33,7 @@ const createUserView = async (req, res, next) => {
   let data = req.body;
   if (req.file && req.file.path !== undefined) {
     data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
   }
   const result = await User.create(data);
   const { password, ...others } = result._doc;
@@ -50,6 +49,7 @@ const updateUserView = async (req, res, next) => {
   const data = req.body;
   if (req.file && req.file.path !== undefined) {
     data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
   }
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

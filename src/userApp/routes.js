@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload } from "../config/base.js";
+import { cloudinaryMiddleware, upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
 import { checkObjectId, validateLogin } from "./middleware.js";
 import { verifyJWT } from "./utils.js";
@@ -153,6 +153,7 @@ router.put(
   upload.single("image"),
   userUpdateValidationRules(),
   validate,
+  cloudinaryMiddleware,
   asyncHandler(views.updateUserView)
 );
 
