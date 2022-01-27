@@ -234,6 +234,8 @@ export const blogAdminActions = async (req, res, next) => {
     );
     return responseHandler(res, "success", 200, drafted);
   }
+  const result = await Category.create(req.body);
+  return resHandler(res, "success", 200, result);
 };
 
 export const addCommentView = async (req, res, next) => {
