@@ -1,6 +1,10 @@
+// const DatauriParser = require("datauri/parser");
+import { config, uploader } from "cloudinary";
+import { parser } from "../blogApp/md.cjs";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import multer from "multer";
+import path from "path";
 dotenv.config();
 const serverUrl = process.env.SERVER_URL || "http://127.0.0.1:3500";
 const serverName = process.env.SERVER_NAME || "LOCAL HOST";
@@ -26,16 +30,7 @@ export const connectDB = async () => {
   }
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = "media";
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    let date = new Date().getTime();
-    cb(null, date + "_" + file.originalname);
-  },
-});
+const storage = multer.memoryStorage();
 
 export const optionsToCustomizeSwagger = {
   customCssUrl: "/swagger.css",
@@ -71,6 +66,34 @@ export const swaggerOptions = {
 };
 
 export const upload = multer({
-  storage: storage,
-  limits: { fileSize: 1024 * 1024 * 5 },
+  storage,
 });
+
+
+
+const cloudinaryConfig = (req, res, next) => {
+  config({
+    cloud_name: process.env.cloud_name,
+    api_key: process.env.api_key,
+    api_secret: process.env.api_secret,
+  }),
+    next();
+};
+
+export { cloudinaryConfig, uploader };
+
+export const cloudinaryMiddleware = async (req, res, next) => {
+  if (req.file) {
+    const file =  parser.format(path.extname(req.file.originalname).toString(), req.file.buffer).content;
+    const result = await uploader.upload(file);
+    if (!result) {
+      console.log("Error happened");
+    }
+    const imageUrl = result.url;
+    req.file.path = imageUrl;
+    console.log(imageUrl, result);
+    next();
+  } else {
+    next();
+  }
+};
