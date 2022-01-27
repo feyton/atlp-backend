@@ -6,17 +6,17 @@ import { userModel as User } from "./models.js";
 import { clearCookie } from "./utils.js";
 dotenv.config();
 
-let tokenExpiration = process.env.JWT_EXPIRATION;
-
 const loginView = async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email }).exec();
   let userInfo = {
     email: user.email,
     roles: user.roles,
     _id: user._id,
+    image: user.image,
+    name: user.firstName,
   };
   const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: parseInt(tokenExpiration),
+    expiresIn: "24h",
   });
   let refreshToken = await RefreshToken.createToken(user);
   res.cookie("jwt", refreshToken, {
@@ -30,7 +30,12 @@ const loginView = async (req, res, next) => {
 const createUserView = async (req, res, next) => {
   const isTaken = await User.findOne({ email: req.body.email });
   if (isTaken) return resHandler(res, "fail", 409, "Email is taken");
-  const result = await User.create(req.body);
+  let data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
+  const result = await User.create(data);
   const { password, ...others } = result._doc;
   return resHandler(res, "success", 201, {
     message: "Login is required to access protected resources",
@@ -41,7 +46,11 @@ const createUserView = async (req, res, next) => {
 const updateUserView = async (req, res, next) => {
   if (!req.userId === req.params.id)
     return resHandler(res, "fail", 403, "Forbiden access");
-
+  const data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
@@ -64,7 +73,7 @@ const deleteUserView = async (req, res, next) => {
 
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return resHandler(res, "fail", 400, "Invalid credentials");
+    return resHandler(res, "fail", 400, { message: "Invalid credentials" });
   }
 
   const deleteUser = await user.delete();
@@ -124,7 +133,7 @@ const refreshTokenView = async (req, res, next) => {
       roles: userToken.user.roles,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
+    { expiresIn: "24h" }
   );
 
   return resHandler(res, "success", 200, { token: accessToken });
@@ -133,11 +142,11 @@ const refreshTokenView = async (req, res, next) => {
 const logoutWithToken = async (res, accessToken) => {
   let token = accessToken.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-    if (err) return resHandler(res, "fail", 403, "Already logged out");
+    if (err) return resHandler(res, "success", 200, "Logout successful");
 
     const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
     if (!refreshtoken) console.log("Deleted from token");
-    return resHandler(res, "fail", 403, "Already logged out");
+    return resHandler(res, "success", 200, "Log out successful");
   });
 };
 
@@ -145,7 +154,7 @@ const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
   if (!cookies.jwt && !accessToken)
-    return resHandler(res, "fail", 403, "Already signed out");
+    return resHandler(res, "success", 200, "Log out successful");
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
@@ -153,7 +162,7 @@ const logoutView = async (req, res, next) => {
       token: refreshToken,
     }).exec();
     if (!userToken || !accessToken)
-      return resHandler(res, "fail", 403, "Already signed out");
+      return resHandler(res, "success", 200, "Log out successful");
 
     return clearCookie(res);
   }
