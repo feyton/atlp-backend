@@ -2,7 +2,7 @@
 import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
 import { blogModel } from "../blogApp/models.js";
-import {userModel} from ".. /userApp/models.js" 
+import {userModel} from "../userApp/models.js" 
 import { apiRoute, app } from "../index.js";
 
 chai.use(chaiHttp);
