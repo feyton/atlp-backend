@@ -15,6 +15,9 @@ const createBlogView = async (req, res, next) => {
   if (req.file) {
     newBlog["photoURL"] = req.file.path;
   }
+  if (!req.user.roles.Admin) {
+    newBlog["published"] = false;
+  }
 
   const result = await Blog.create(newBlog);
   if (!result)
