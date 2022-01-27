@@ -44,6 +44,7 @@ router.post(
   upload.single("image"),
   userSignupValidationRules(),
   validate,
+  cloudinaryMiddleware,
   asyncHandler(views.createUserView)
 );
 

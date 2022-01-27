@@ -73,7 +73,7 @@ const deleteUserView = async (req, res, next) => {
 
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return resHandler(res, "fail", 400, "Invalid credentials");
+    return resHandler(res, "fail", 400, { message: "Invalid credentials" });
   }
 
   const deleteUser = await user.delete();

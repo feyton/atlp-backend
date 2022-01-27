@@ -101,4 +101,10 @@ export const cloudinaryMiddleware = async (req, res, next) => {
 
 export const deleteAsset = async (id) => {
   const deleted = await uploader.destroy(id);
+  if (!deleted) {
+    console.log("Not able to delete");
+    console.log(deleted);
+  } else {
+    console.log("deleted");
+  }
 };

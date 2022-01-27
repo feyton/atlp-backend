@@ -7,7 +7,7 @@ const Blog = models.blogModel;
 const Category = models.categoryModel;
 const commentModel = models.commentModel;
 
-const createBlogView = async (req, res, next) => {
+export const createBlogView = async (req, res, next) => {
   const titleExist = await Blog.findOne({ title: req.body.title });
 
   if (titleExist) return resHandler(res, "fail", 409, "Title already exists");
@@ -27,7 +27,7 @@ const createBlogView = async (req, res, next) => {
   return resHandler(res, "success", 201, result);
 };
 
-const updateBlogView = async (req, res, next) => {
+export const updateBlogView = async (req, res, next) => {
   try {
     const author = req.userId;
     const blogPost = await Blog.findById(req.params.id);
@@ -78,7 +78,7 @@ const updateBlogView = async (req, res, next) => {
   }
 };
 
-const deleteBlogView = async (req, res, next) => {
+export const deleteBlogView = async (req, res, next) => {
   const user = req.userId;
   const blog = await Blog.findById(req.params.id);
 
@@ -102,7 +102,9 @@ const deleteBlogView = async (req, res, next) => {
   return resHandler(res, "success", 200, {});
 };
 
-const getBlogDetailView = async (req, res, next) => {
+export const getBlogDetailView = async (req, res, next) => {
+  const edit = req.query.edit;
+
   const blog = await Blog.findById(req.params.id).populate("author", [
     "_id",
     "firstName",
@@ -121,12 +123,15 @@ const getBlogDetailView = async (req, res, next) => {
     req.postID = blog._id;
     return resHandler(res, "fail", 403, "You don't have access");
   }
+  if (edit && edit == "true") {
+    return resHandler(res, "success", 200, blog);
+  }
   const comments = await blog.getComments();
 
   return resHandler(res, "success", 200, { blog, comments });
 };
 
-const getBlogsView = async (req, res, next) => {
+export const getBlogsView = async (req, res, next) => {
   const page = req.query.page || 1;
   const limit = req.query.limit || 5;
   const customLabels = {
@@ -266,11 +271,3 @@ export const handleCommentAction = async (req, res, next) => {
   }
 };
 //add your function to export
-export {
-  getBlogDetailView,
-  createBlogView,
-  deleteBlogView,
-  updateBlogView,
-  getBlogsView,
-  createCategoryView,
-};
