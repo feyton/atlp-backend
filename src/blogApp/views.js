@@ -184,28 +184,30 @@ export const blogAdminActions = async (req, res, next) => {
   if (!req.user.roles.Admin) {
     return resHandler(res, "fail", 403, "Only for Admins");
   }
+  console.log(req.body);
   const action = req.body.action;
-  const items = req.body.ids;
-  switch (action) {
-    case "delete":
-      const deleted = await Blog.deleteMany({ _id: { $in: items } });
-      return responseHandler(res, "success", 200, deleted);
+  let items = req.body.idList;
+  items = JSON.parse(items);
+  console.log(items);
 
-    case "publish":
-      const published = await Blog.updateMany(
-        { _id: { $in: items } },
-        { published: true }
-      );
-      return responseHandler(res, "success", 200, published);
-
-    case "draft":
-      const drafted = await Blog.updateMany(
-        { _id: { $in: items } },
-        { published: false }
-      );
-      return responseHandler(res, "success", 200, drafted);
-    default:
-      return resHandler(res, "success", 200, {});
+  if (!action || !items) {
+    return resHandler(res, "fail", 400, { message: "parameter not provided" });
+  }
+  if (action == "publish") {
+    const published = await Blog.updateMany(
+      { _id: { $in: items } },
+      { published: true }
+    );
+    return responseHandler(res, "success", 200, published);
+  } else if (action == "delete") {
+    const deleted = await Blog.deleteMany({ _id: { $in: items } });
+    return responseHandler(res, "success", 200, deleted);
+  } else if (action == "draft") {
+    const drafted = await Blog.updateMany(
+      { _id: { $in: items } },
+      { published: false }
+    );
+    return responseHandler(res, "success", 200, drafted);
   }
 };
 //add your function to export
