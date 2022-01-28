@@ -1,24 +1,17 @@
 # This is a basic workflow to help you get started with Actions
-
-
-
 name: CI
-
-
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-
-    branches: [githubAction, staging, main]
+    branches:
+      - main
+      - staging
+      - githubAction
   pull_request:
-    branches: [main, staging]
-
-
-
-
-
-
+    branches: 
+      - main
+      - staging
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -28,7 +21,9 @@ env:
   TESTING_DB_URL: ${{secrets.TESTING_DB_URL}}
   ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
   API_BASE: ${{secrets.API_BASE}}
-
+  REFRESH_TOKEN_SECRET: ${{secrets.REFRESH_TOKEN_SECRET}}
+  JWT_EXPIRATION: ${{secrets.JWT_EXPIRATION}}
+  JWT_REFRESH_EXPIRATION: ${{secrets.JWT_REFRESH_EXPIRATION}}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -36,7 +31,6 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
     env:
       TESTING_DB_URL: ${{secrets.TESTING_DB_URL}}
       ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
@@ -63,19 +57,15 @@ jobs:
         uses: paambaati/codeclimate-action@v2.5.7
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID}}
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
-        with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "sample-app-feyton" #Must be unique in Heroku
-          heroku_email: "tumbafabruce@gmail.com"
-
-
-      # Runs a set of commands using the runners shell
-      
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
+  #       with:
+  #         heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+  #         heroku_app_name: "sample-app-feyton" #Must be unique in Heroku
+  #         heroku_email: "tumbafabruce@gmail.com"
 
 

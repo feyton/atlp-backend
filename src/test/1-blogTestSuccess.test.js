@@ -2,7 +2,6 @@
 import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
 import { blogModel } from "../blogApp/models.js";
-import {userModel} from "../userApp/models.js" 
 import { apiRoute, app } from "../index.js";
 
 chai.use(chaiHttp);
@@ -10,9 +9,7 @@ chai.use(chaiHttp);
 describe("CRUD Operations on blog", async () => {
   before(async () => {
     await blogModel.deleteMany({});
-    await userModel.deleteMany({});
-    console.log("User and blog cleared") 
-    
+    console.log("User and blog cleared");
   });
   let token, userId, postId, publishedPostId, post2ID, token2;
   let post = {
