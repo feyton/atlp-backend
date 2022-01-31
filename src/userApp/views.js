@@ -1,9 +1,15 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import path, { join } from "path";
 import { RefreshToken } from "../config/models.js";
-import { responseHandler as resHandler } from "../config/utils.js";
-import { userModel as User } from "./models.js";
-import { clearCookie } from "./utils.js";
+import {
+  responseHandler as resHandler,
+  responseHandler,
+} from "../config/utils.js";
+import { renderEmail } from "./email.js";
+import { resetTokenModel, userModel as User } from "./models.js";
+import { clearCookie, sendEmail } from "./utils.js";
+const __dirname = path.resolve();
 dotenv.config();
 
 const loginView = async (req, res, next) => {
@@ -47,6 +53,9 @@ const updateUserView = async (req, res, next) => {
   if (!req.userId === req.params.id)
     return resHandler(res, "fail", 403, "Forbiden access");
   const data = req.body;
+  if (data["password"]) {
+    delete data["password"];
+  }
   if (req.file && req.file.path !== undefined) {
     data["image"] = req.file.path;
     data["imageID"] = req.file.public_id;
@@ -168,6 +177,105 @@ const logoutView = async (req, res, next) => {
   }
 
   return logoutWithToken(res, accessToken);
+};
+
+export const passwordReset = async (req, res, next) => {
+  const email = req.body.email;
+  const user = await User.findOne({ email: email });
+  if (!user)
+    return resHandler(res, "fail", 400, { message: "The user does not exist" });
+  let tokenObject = await resetTokenModel.findOne({ user: user._id });
+  let token;
+  if (!tokenObject) {
+    token = await resetTokenModel.createToken(user._id);
+  } else {
+    const validToken = await tokenObject.checkValid();
+    if (!validToken) {
+      token = await resetTokenModel.createToken(user._id);
+    } else {
+      token = tokenObject.token;
+    }
+  }
+
+  const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token}`;
+  await sendEmail(user.email, "Password reset", renderEmail(link));
+  return resHandler(res, "success", 200, {
+    message: "Password reset link sent to your email",
+  });
+};
+
+export const newPassword = async (req, res, next) => {
+  const token = req.params.token;
+  const user = await User.findById(req.params.id);
+  const tokenObject = await resetTokenModel.findOne({
+    user: user._id,
+    token: token,
+  });
+  if (!tokenObject) {
+    return resHandler(res, "fail", 400, { message: "Invalid link or expired" });
+  }
+  const validToken = await tokenObject.checkValid();
+  if (!validToken) {
+    return resHandler(res, "fail", 400, { message: "Invalid expired" });
+  }
+  user.password = req.body.password;
+  const newUser = await user.save();
+  await tokenObject.dump();
+
+  if (req.accepts()[0] == "text/html") {
+    return res.status(200).send(`
+    <body style="display: flex; justify-content:center">
+    <h1 style="margin-top: 5rem;">Your password has been changed successfully</h1>
+    <p>Use it to login. All your sessions are invalidate</p>
+    </body>`);
+  }
+
+  return responseHandler(res, "success", 200, {
+    message: "Your password has been updated. Use the new password to login in",
+  });
+};
+
+export const resetLinkValidator = async (req, res, next) => {
+  const token = req.params.token;
+  const user = await User.findById(req.params.id);
+  const tokenObject = await resetTokenModel.findOne({
+    user: user._id,
+    token: token,
+  });
+
+  if (!tokenObject) {
+    if (req.accepts()[0] == "text/html") {
+      return res.status(400).send("<h1>Invalid link or expired</h1>");
+    } else {
+      return resHandler(res, "fail", 400, {
+        message: "Invalid link or expired",
+      });
+    }
+  }
+  const validToken = await tokenObject.checkValid();
+  if (!validToken) {
+    if (req.accepts()[0] == "text/html") {
+      return res.status(400).send("<h1>Invalid link or expired</h1>");
+    } else {
+      return resHandler(res, "fail", 400, {
+        message: "Invalid link or expired",
+      });
+    }
+  }
+  if (req.accepts()[0] == "text/html") {
+    return res.status(200).sendFile("reset.html", {
+      root: join(__dirname, "templates"),
+      dotfiles: "deny",
+      headers: {
+        "x-timestamp": Date.now(),
+        "x-sent": true,
+      },
+    });
+  } else {
+    return resHandler(re, "success", 200, {
+      message: "The link is valid. Use it to send the new Password",
+    });
+  }
 };
 //add your function to export
 export {

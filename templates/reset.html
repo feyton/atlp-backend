@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap');
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.774), rgba(0, 0, 0, 0.623)), url("https://res.cloudinary.com/feyton/image/upload/v1643648356/pngwing.com_wnl4ds.png");
+            background-size: cover;
+            font-family: 'Lexend';
+
+        }
+
+        form {
+            width: fit-content;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 10px;
+            height: fit-content;
+            margin: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        input {
+            padding: .5rem 1rem;
+            display: block;
+            margin: .3rem;
+            border-radius: 10px;
+            outline: none;
+            border: 2px solid rgb(1, 121, 121);
+        }
+
+        input::placeholder {
+            font-family: 'Lexend';
+        }
+
+        button {
+            margin: .3rem;
+            padding: .4rem;
+            font-family: 'Lexend';
+            background: rgb(18, 14, 94);
+            background: linear-gradient(90deg, rgb(43, 39, 121) 0%, rgb(72, 72, 173) 42%, rrgb(55, 162, 184)100%);
+            color: white;
+            cursor: pointer;
+        }
+
+        ul li {
+            list-style-type: square;
+
+        }
+    </style>
+</head>
+
+<body>
+    <form action="" method="POST">
+        <h1>Reset Password</h1>
+        <input type="password" placeholder="New password" required name="password"
+            pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$"
+            title="Letter, symbol, number and at least 6 charcters">
+        <input type="password" placeholder="Confirm password" required name="password2"
+            pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$"
+            title="Letter, symbol, number and at least 6 charcters">
+        <div class="message">
+            <ul>
+                <li>At least one character, number</li>
+                <li>At least one small letter and uppercase letter</li>
+                <li>Six character of length</li>
+            </ul>
+        </div>
+        <button type="submit">RESET PASSWORD</button>
+    </form>
+
+    <script>
+        const form = document.querySelector("form");
+        let passRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/g
+        form.password.addEventListener("change", (e) => {
+            let password = e.target.value
+
+        })
+        form.addEventListener("submit", (e) => {
+
+            const password = form.password.value
+            const pass2 = form.password2.value;
+            if (password == pass2 && password.matches(passRegex)) {
+
+            } else {
+                e.preventDefault()
+            }
+
+
+        })
+
+    </script>
+</body>
+
+</html>
