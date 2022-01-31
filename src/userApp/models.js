@@ -3,6 +3,7 @@
 
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { v4 as uuid } from "uuid";
 import { blogModel } from "../blogApp/models.js";
 import { deleteAsset } from "../config/base.js";
 const { Schema, model } = mongoose;
@@ -86,6 +87,47 @@ userSchema.pre("remove", async function (next) {
   }
   next();
 });
+
+const ResetToken = new Schema({
+  token: String,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  expiryDate: Date,
+  expired: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+ResetToken.statics.createToken = async function (user) {
+  let expireAt = new Date();
+  expireAt.setSeconds(expireAt.getSeconds() + 600);
+  let token = uuid();
+  let object = new this({
+    token: token,
+    user: user,
+    expiryDate: expireAt.getTime(),
+  });
+  let newToken = await object.save();
+  return newToken.token;
+};
+
+ResetToken.methods.checkValid = async function () {
+  let token = this;
+  const isValid = (await token.expiryDate.getTime()) > new Date().getTime();
+  if (isValid) return this.token;
+  await this.delete();
+  return null;
+};
+ResetToken.methods.dump = async function () {
+  let token = this;
+  await token.delete();
+  return true;
+};
 //export your modules here
 const userModel = model("User", userSchema);
+export const resetTokenModel = model("ResetToken", ResetToken);
 export { userModel };
