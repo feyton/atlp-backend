@@ -55,3 +55,10 @@ export const clearCookie = (res) => {
     data: {},
   });
 };
+
+export const adminRequired = (req, res, next) => {
+  if (!req.user.roles.Admin == 1) {
+    return responseHandler(res, "fail", 403, "Permission denied");
+  }
+  return next();
+};
