@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "The Backend for the ATLP Project by Fabrice",
   "main": "index.js",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "test": "cross-env NODE_ENV=test mocha --require babel-core/register ./src/test/ --recursive --timeout 30000  --exit ",
     "start": "node ./src/index",
