@@ -4,6 +4,7 @@ import { Router } from "express";
 import { router as BlogRouter } from "../blogApp/routes.js";
 import { upload } from "../config/base.js";
 import { asyncHandler } from "../config/utils.js";
+import { router as TaskRouter } from "../taskApp/routes.js";
 import { router as UserRouter } from "../userApp/routes.js";
 import { refreshTokenView } from "../userApp/views.js";
 import { getLogs } from "./views.js";
@@ -14,6 +15,7 @@ const router = Router();
 
 router.use("/accounts", UserRouter);
 router.use("/blogs", BlogRouter);
+router.use("/tasks", TaskRouter);
 router.get(
   "/error",
   asyncHandler(async (req, res, next) => {
