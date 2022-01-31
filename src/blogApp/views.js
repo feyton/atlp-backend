@@ -127,7 +127,7 @@ export const getBlogDetailView = async (req, res, next) => {
   if (edit && edit == "true") {
     return resHandler(res, "success", 200, blog);
   }
-  const comments = await blog.getComments();
+  const comments = await commentModel.find({ post: blog._id, approved: true });
 
   return resHandler(res, "success", 200, { blog, comments });
 };

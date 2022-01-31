@@ -3,6 +3,7 @@ import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
 import { blogModel } from "../blogApp/models.js";
 import { apiRoute, app } from "../index.js";
+import { userModel } from "../userApp/models.js";
 
 chai.use(chaiHttp);
 
@@ -33,6 +34,16 @@ describe("CRUD Operations on blog", async () => {
     password: "Fab1234@3.",
     lastName: "Fabrice",
     firstName: "Hafashimana",
+  };
+  let adminUserdata = {
+    email: "admin@gmail.com",
+    password: "Fab1234@3.",
+    lastName: "Fabrice",
+    firstName: "Hafashimana",
+    roles: {
+      User: 0,
+      Admin: 1,
+    },
   };
 
   it("It should return a token for the logged in user", async () => {
@@ -141,5 +152,118 @@ describe("CRUD Operations on blog", async () => {
       .request(app)
       .get(apiRoute + "/blogs/" + postId);
     expect(blogDetail).to.have.status(403);
+  });
+  describe("Test the Task view", async () => {
+    let taskID;
+    it("Should return a list of tasks", async () => {
+      const result = await chai
+        .request(app)
+        .get(apiRoute + "/tasks/")
+        .set("Authorization", "Bearer " + token2);
+      expect(result).to.have.status(200);
+      expect(result.body.data).to.be.an("array");
+    });
+    it("Should create a new Task for the user", async () => {
+      const result = await chai
+        .request(app)
+        .post(apiRoute + "/tasks/")
+        .set("Authorization", "Bearer " + token2)
+        .send({
+          body: "To refine my code",
+        });
+      expect(result).to.have.status(201);
+      expect(result.body.data).to.have.property("owner");
+      taskID = result.body.data._id;
+    });
+    it("Should delete a task", async () => {
+      const result = await chai
+        .request(app)
+        .delete(apiRoute + "/tasks/" + taskID)
+        .set("Authorization", "Bearer " + token2);
+
+      expect(result).to.have.status(200);
+      expect(result.body.data).to.be.an("object");
+    });
+  });
+  let ticket, messageID;
+  describe("Test the Contact view for non admins", async () => {
+    it("Should return a forbiden request error for non admin user", async () => {
+      const result = await chai
+        .request(app)
+        .get(apiRoute + "/contacts/")
+        .set("Authorization", "Bearer " + token2);
+      expect(result).to.have.status(403);
+    });
+    it("Should create a new message and send the ticket", async () => {
+      const result = await chai
+        .request(app)
+        .post(apiRoute + "/contacts/")
+
+        .send({
+          message: "To refine my code",
+          name: "Fabrice",
+          email: "tumbafabruce@gmail.com",
+        });
+      expect(result).to.have.status(201);
+      expect(result.body.data).to.have.property("ticket");
+      ticket = result.body.data.ticket;
+      messageID = result.body.data._id;
+    });
+    it("Should return a message status", async () => {
+      const result = await chai
+        .request(app)
+        .get(apiRoute + "/contacts/status/" + ticket);
+
+      expect(result).to.have.status(200);
+      expect(result.body.data).to.be.an("object");
+    });
+  });
+  describe("Contact App for admin user", async () => {
+    let tokenAdmin;
+    before(async () => {
+      const adminUser = await userModel.create(adminUserdata);
+      const result = await chai
+        .request(app)
+        .post(apiRoute + "/accounts/login")
+        .send({
+          email: "admin@gmail.com",
+          password: "Fab1234@3.",
+        });
+      tokenAdmin = result.body.data.token;
+      console.log("Admin logged in");
+    });
+
+    it("Should return a list of all messages", async () => {
+      const result = await chai
+        .request(app)
+        .get(apiRoute + "/contacts/")
+        .set("Authorization", "Bearer " + tokenAdmin);
+      expect(result).to.have.status(200);
+      expect(result.body).to.have.property("data");
+    });
+    it("Should add a reply to the message", async () => {
+      const result = await chai
+        .request(app)
+        .put(apiRoute + "/contacts/" + messageID)
+        .set("Authorization", "Bearer " + tokenAdmin)
+        .send({
+          reply: "Your request has been responded",
+        });
+
+      expect(result).to.have.status(200);
+      expect(result.body).to.have.property("data");
+    });
+    it("Should add a reply to the message", async () => {
+      const result = await chai
+        .request(app)
+        .put(apiRoute + "/contacts/" + messageID)
+        .set("Authorization", "Bearer " + tokenAdmin)
+        .send({
+          reply: "Your request has been responded",
+        });
+
+      expect(result).to.have.status(400);
+      expect(result.body).to.have.property("data");
+    });
   });
 });

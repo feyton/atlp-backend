@@ -20,7 +20,7 @@ export const sendReply = async (ticket, sender, reply) => {
     ### -------------
 
     or use open this link in the browser:
-    http://127.0.0.1:3500/api/v1/contacts/status/${ticket}?open=true
+    ${process.env.SERVER_URL}/api/v1/contacts/status/${ticket}?open=true
 
     Note: keep this ticket private. Anyone with the ticket can view the status and replies of your query.
 
@@ -43,7 +43,7 @@ export const sendTicket = async (ticket, sender) => {
     ### -------------
 
     or use open this link in the browser:
-    http://127.0.0.1:3500/api/v1/contacts/status/${ticket}
+    ${process.env.SERVER_URL}/api/v1/contacts/status/${ticket}
 
     Note: keep this ticket private. Anyone with the ticket can view the status and replies of your query.
 

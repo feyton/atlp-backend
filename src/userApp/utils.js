@@ -79,7 +79,7 @@ export const sendEmail = async (email, subject, html) => {
       },
     });
     const sentMail = await transport.sendMail({
-      from: process.env.EMAIL_USER,
+      from: "fabrice@andela.com",
       to: email,
       subject: subject,
       html: html,

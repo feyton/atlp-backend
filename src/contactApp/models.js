@@ -105,7 +105,7 @@ contactMessageSchema.methods.reopen = async function () {
 };
 contactMessageSchema.methods.close = async function () {
   let msg = this;
-  await msg.updateOne({ open: false });
+  await msg.updateOne({ open: false, meta: { replied: true } });
   await msg.save();
 };
 contactMessageSchema.plugin(mongoosePaginator);

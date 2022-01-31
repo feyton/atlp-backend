@@ -1,6 +1,6 @@
 {
   "all": true,
-  "exclude": ["**/*.spec.js", "src/blogApp/swaggerDoc.js", "coverage", "src/indexApp/swaggerComponents.js"],
+  "exclude": ["**/*.spec.js", "src/blogApp/swaggerDoc.js", "coverage", "src/indexApp/swaggerComponents.js", "src/userApp/docs.js"],
 
   "functions": 50,
   "branches": 60,
