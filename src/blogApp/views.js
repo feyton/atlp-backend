@@ -41,7 +41,7 @@ export const updateBlogView = async (req, res, next) => {
     }
     const isAuthor = await blogPost.isAuthor(author);
 
-    if (!isAuthor && !author.roles.Admin) {
+    if (!isAuthor && !req.user.roles.Admin) {
       return resHandler(
         res,
         "fail",
@@ -54,21 +54,7 @@ export const updateBlogView = async (req, res, next) => {
       new: true,
     });
 
-    const newData = await Blog.populate(updatedBlog, {
-      path: "author",
-      model: "User",
-      select: [
-        "_id",
-        "firstName",
-        "lastName",
-        "image",
-        "bio",
-        "facebook",
-        "twitter",
-      ],
-    });
-
-    return resHandler(res, "success", 201, newData);
+    return resHandler(res, "success", 200, updatedBlog);
   } catch (err) {
     if (err.code == 11000) {
       return resHandler(res, "fail", 409, {

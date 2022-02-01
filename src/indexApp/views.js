@@ -4,7 +4,7 @@ import { responseHandler } from "../config/utils.js";
 const __dirname = path.resolve();
 
 const IndexView = (req, res) => {
-  return res.status(302).redirect("/docs");
+  return res.redirect("/docs");
 };
 
 /* c8 ignore start */

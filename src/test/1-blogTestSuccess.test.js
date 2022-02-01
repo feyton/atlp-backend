@@ -85,7 +85,7 @@ describe("CRUD Operations on blog", async () => {
       .send(postUpdate)
       .set("Authorization", "Bearer " + token);
 
-    expect(updateRequest).to.have.status(201);
+    expect(updateRequest).to.have.status(200);
     expect(updateRequest.body.data.title).to.eql("Test 1 updated");
     expect(updateRequest.body.data.published).to.eql(false);
   });
