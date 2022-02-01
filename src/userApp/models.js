@@ -4,8 +4,10 @@
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
-import { blogModel } from "../blogApp/models.js";
+import { blogModel, commentModel } from "../blogApp/models.js";
 import { deleteAsset } from "../config/base.js";
+import { RefreshToken } from "../config/models.js";
+import { TaskModel } from "../taskApp/models.js";
 const { Schema, model } = mongoose;
 
 //define your models here
@@ -82,6 +84,9 @@ userSchema.pre("remove", async function (next) {
   // To Do handle post deletion when user is deleted
   const user = this;
   await blogModel.deleteMany({ author: user._id });
+  await commentModel.deleteMany({ author: user._id });
+  await TaskModel.deleteMany({ owner: user._id });
+  await RefreshToken.deleteMany({ user: user._id });
   if (user.imageID) {
     await deleteAsset(user.imageID);
   }

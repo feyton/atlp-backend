@@ -54,6 +54,13 @@ commentSchema.methods.addLike = async function () {
   if (newComment) return true;
   return false;
 };
+commentSchema.methods.disLike = async function () {
+  let comment = this;
+  comment.likes -= 1;
+  const newComment = await comment.save();
+  if (newComment) return true;
+  return false;
+};
 commentSchema.plugin(mongoosePaginator);
 
 const categorySchema = new Schema({
@@ -134,7 +141,7 @@ blogSchema.methods.isAuthor = async function (author) {
   const blog = this;
   return (await blog.author) == author;
 };
-blogSchema.methods.getComments = async function () {
+blogSchema.methods.getComments = async function (page, limit) {
   const blog = this;
   const comments = await commentModel
     .find({ post: blog._id })

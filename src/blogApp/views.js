@@ -81,7 +81,6 @@ export const updateBlogView = async (req, res, next) => {
 export const deleteBlogView = async (req, res, next) => {
   const user = req.userId;
   const blog = await Blog.findById(req.params.id);
-  console.log(req.user.roles.Admin);
 
   if (!blog) {
     return resHandler(res, "fail", 404, "Resource not found");
@@ -115,6 +114,7 @@ export const getBlogDetailView = async (req, res, next) => {
     "twitter",
     "bio",
   ]);
+
   if (!blog) {
     return resHandler(res, "fail", 404, "Resource not found");
     //TODO Add the ability for admin to view unpublished blogs
@@ -127,8 +127,7 @@ export const getBlogDetailView = async (req, res, next) => {
   if (edit && edit == "true") {
     return resHandler(res, "success", 200, blog);
   }
-  const comments = await commentModel.find({ post: blog._id, approved: true });
-
+  const comments = await blog.getComments();
   return resHandler(res, "success", 200, { blog, comments });
 };
 
@@ -169,13 +168,7 @@ export const getBlogsViewAdmin = async (req, res, next) => {
 
   let posts;
   if (!req.user.roles.Admin) {
-    posts = await Blog.paginate(
-      { author: req.userID },
-      options,
-      (err, result) => {
-        return result;
-      }
-    );
+    posts = await Blog.paginate({ author: req.userId }, options);
   } else {
     posts = await Blog.paginate({}, options, (err, result) => {
       return result;
@@ -185,7 +178,7 @@ export const getBlogsViewAdmin = async (req, res, next) => {
 };
 
 // Category Views
-const createCategoryView = async (req, res, next) => {
+export const createCategoryView = async (req, res, next) => {
   const exists = await Category.findOne({ title: req.body.title }).exec();
   if (exists) {
     return resHandler(res, "fail", 409, "The category already exists");
@@ -250,13 +243,14 @@ export const addCommentView = async (req, res, next) => {
   }
   let comment = req.body;
   comment["author"] = req.userId;
-  comment["post"] = post._id;
+  comment["post"] = req.params.id;
+
   const newComment = await commentModel.create(comment);
 
   if (newComment) {
     return resHandler(res, "success", 201, newComment);
   }
-  return resHandler(res, "error");
+  return resHandler(res, "error", 500, "Unable to connect to the database");
 };
 export const handleCommentAction = async (req, res, next) => {
   const action = req.query.action;
@@ -267,6 +261,11 @@ export const handleCommentAction = async (req, res, next) => {
   if (action == "like") {
     const liked = await comment.addLike();
     if (liked) {
+      return resHandler(res, "success", 200, {});
+    }
+  } else if (action == "dislike") {
+    const disliked = await comment.disLike();
+    if (disliked) {
       return resHandler(res, "success", 200, {});
     }
   } else {

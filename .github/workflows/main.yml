@@ -7,14 +7,12 @@ on:
     branches:
       - main
       - staging
-      - githubAction
   pull_request:
     branches: 
       - main
       - staging
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
 
 # Environment variables
 env:
@@ -40,6 +38,7 @@ jobs:
       API_BASE: ${{secrets.API_BASE}}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
+    concurrency: test_environment
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -57,15 +56,15 @@ jobs:
         uses: paambaati/codeclimate-action@v2.5.7
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID}}
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
-  #       with:
-  #         heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-  #         heroku_app_name: "sample-app-feyton" #Must be unique in Heroku
-  #         heroku_email: "tumbafabruce@gmail.com"
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "atlp-backend-staging" #Must be unique in Heroku
+          heroku_email: "tumbafabruce@gmail.com"
 
 
