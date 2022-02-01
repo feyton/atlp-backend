@@ -224,10 +224,14 @@ export const newPassword = async (req, res, next) => {
 
   if (req.accepts()[0] == "text/html") {
     return res.status(200).send(`
-    <body style="display: flex; justify-content:center">
-    <h1 style="margin-top: 5rem;">Your password has been changed successfully</h1>
-    <p>Use it to login. All your sessions are invalidate</p>
-    </body>`);
+    <body style="display: flex; align-items: center; height: 100%; justify-content: center;">
+    <div class="text-box" style="max-width: 400px; background-color: rgb(21, 92, 124); 
+    padding: 2rem; color: beige; border-radius: 30px;">
+        <h1>Your password has been changed successfully</h1>
+        <p >Use it to login!</p>
+    </div>
+    </body>
+    `);
   }
 
   return responseHandler(res, "success", 200, {
