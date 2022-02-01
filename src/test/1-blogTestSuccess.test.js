@@ -19,7 +19,7 @@ describe("CRUD Operations on blog", async () => {
     summary: "Here goes our summary",
   };
   let post2 = {
-    title: "Post 1 test",
+    title: "Post 2 test",
     content: "Here is content",
     summary: "Here goes our summary",
   };
