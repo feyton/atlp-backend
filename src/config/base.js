@@ -108,3 +108,21 @@ export const deleteAsset = async (id) => {
     console.log("deleted");
   }
 };
+
+export const handleUpload = async (req, res, next) => {
+  if (req.file) {
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      req.file.buffer
+    ).content;
+    const result = await uploader.upload(file, {
+      folder: "postImages",
+    });
+    if (!result) {
+      return res.status(500).json({ message: "Unable to upload the picture" });
+    }
+    const imageUrl = result.url;
+    return res.status(201).json({ url: imageUrl, public_id: result.public_id });
+  }
+  return res.status(400).json({ message: "No file was passed" });
+};

@@ -5,11 +5,26 @@
  *  name: User
  *  description: Routes for the user App
  */
-
-
+/**
+ * @openapi
+ * tags:
+ *  name: Admin
+ *  description: Routes that require admin priviledges
+ */
+/**
+ * @openapi
+ * tags:
+ *  name: Task
+ *  description: Routes for user to create and manage tasks
+ */
+/**
+ * @openapi
+ * tags:
+ *  name: Contact Us
+ *  description: Routes accepting and proccessing user requests
+ */
 
 // ----------------//-------------//
-
 
 // Security Schemes
 /**
@@ -21,14 +36,6 @@
  *      scheme: Bearer
  *      bearerFormat: JWT
  */
-
-
-
-
-
-
-
-
 
 // -------------------//-------------------//
 
