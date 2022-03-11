@@ -80,13 +80,16 @@ export const errLogger = (error, req, res, next) => {
     return res
       .status(406)
       .send({ code: 406, status: "fail", message: error.message }); // Bad request
+  } else if (error.code == 'ERR_HTTP_HEADERS_SENT') {
+    
+  } else {
+    return responseHandler(
+      res,
+      "error",
+      500,
+      errorMessage[Math.floor(Math.random() * errorMessage.length)]
+    );
   }
-  return responseHandler(
-    res,
-    "error",
-    500,
-    errorMessage[Math.floor(Math.random() * errorMessage.length)]
-  );
 };
 
 export const asyncHandler = (func) => (req, res, next) => {

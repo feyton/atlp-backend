@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 import { responseHandler } from "../config/utils.js";
+dotenv.config();
 
 const { TokenExpiredError } = jwt;
 
@@ -54,4 +57,36 @@ export const clearCookie = (res) => {
     code: 200,
     data: {},
   });
+};
+
+export const adminRequired = (req, res, next) => {
+  if (!req.user.roles.Admin == 1) {
+    return responseHandler(res, "fail", 403, "Permission denied");
+  }
+  return next();
+};
+
+export const pswResetToken = () => {};
+
+export const sendEmail = async (email, subject, html) => {
+  try {
+    let transport = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      auth: {
+        user: "joe.wilderman28@ethereal.email",
+        pass: "1frKw3xHDUkeErtbdf",
+      },
+    });
+    const sentMail = await transport.sendMail({
+      from: "fabrice@andela.com",
+      to: email,
+      subject: subject,
+      html: html,
+    });
+    console.log("Email sent successfully");
+    console.log("Preview Url: %s", nodemailer.getTestMessageUrl(sentMail));
+  } catch (error) {
+    console.log(error);
+  }
 };

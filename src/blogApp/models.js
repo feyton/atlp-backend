@@ -2,8 +2,12 @@
 // link on database
 
 import mongoose from "mongoose";
+import mongoosePaginator from "mongoose-paginate-v2";
+import path from "path";
+import { deleteAsset } from "../config/base.js";
 import { slug } from "./md.cjs";
 const { Schema, model } = mongoose;
+const __dirname = path.resolve();
 
 mongoose.plugin(slug);
 
@@ -16,17 +20,48 @@ const commentSchema = new Schema(
       ref: "User",
       required: true,
     },
-    message: String,
     post: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Blog",
       required: true,
+    },
+    body: {
+      type: String,
+      required: true,
+    },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    replies: [],
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+    approved: {
+      type: Boolean,
+      default: true,
     },
   },
   {
     timestamps: true,
   }
 );
+commentSchema.methods.addLike = async function () {
+  let comment = this;
+  comment.likes += 1;
+  const newComment = await comment.save();
+  if (newComment) return true;
+  return false;
+};
+commentSchema.methods.disLike = async function () {
+  let comment = this;
+  comment.likes -= 1;
+  const newComment = await comment.save();
+  if (newComment) return true;
+  return false;
+};
+commentSchema.plugin(mongoosePaginator);
 
 const categorySchema = new Schema({
   title: {
@@ -65,12 +100,17 @@ const blogSchema = new Schema(
       type: Date,
       default: Date.now,
     },
-    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     meta: {
       votes: Number,
       favs: Number,
+      likes: Number,
+      views: Number,
     },
-    photoURL: String,
+    photoURL: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/feyton/image/upload/v1643247972/post_n58rru.jpg",
+    },
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -79,6 +119,7 @@ const blogSchema = new Schema(
     categories: {
       type: Array,
     },
+    imageID: String,
   },
   {
     timestamps: true,
@@ -88,11 +129,31 @@ const blogSchema = new Schema(
 blogSchema.pre("save", function (next) {
   next();
 });
-
+blogSchema.pre("remove", async function (next) {
+  let blog = this;
+  if (blog.imageID) {
+    const deleted = await deleteAsset(blog.imageID);
+  }
+  await commentModel.deleteMany({ post: blog._id });
+  next();
+});
 blogSchema.methods.isAuthor = async function (author) {
   const blog = this;
   return (await blog.author) == author;
 };
+blogSchema.methods.getComments = async function (page, limit) {
+  const blog = this;
+  const comments = await commentModel
+    .find({ post: blog._id })
+    .select(["body", "likes", "date"])
+    .populate({
+      path: "author",
+      model: "User",
+      select: ["firstName", "image"],
+    });
+  return comments;
+};
+blogSchema.plugin(mongoosePaginator);
 
 const blogModel = model("Blog", blogSchema);
 const categoryModel = model("Category", categorySchema);

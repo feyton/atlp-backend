@@ -1,12 +1,16 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import path, { join } from "path";
 import { RefreshToken } from "../config/models.js";
-import { responseHandler as resHandler } from "../config/utils.js";
-import { userModel as User } from "./models.js";
-import { clearCookie } from "./utils.js";
+import {
+  responseHandler as resHandler,
+  responseHandler,
+} from "../config/utils.js";
+import { renderEmail } from "./email.js";
+import { resetTokenModel, userModel as User } from "./models.js";
+import { clearCookie, sendEmail } from "./utils.js";
+const __dirname = path.resolve();
 dotenv.config();
-
-let tokenExpiration = process.env.JWT_EXPIRATION;
 
 const loginView = async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email }).exec();
@@ -14,9 +18,11 @@ const loginView = async (req, res, next) => {
     email: user.email,
     roles: user.roles,
     _id: user._id,
+    image: user.image,
+    name: user.firstName,
   };
   const accessToken = jwt.sign(userInfo, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: parseInt(tokenExpiration),
+    expiresIn: "24h",
   });
   let refreshToken = await RefreshToken.createToken(user);
   res.cookie("jwt", refreshToken, {
@@ -30,7 +36,12 @@ const loginView = async (req, res, next) => {
 const createUserView = async (req, res, next) => {
   const isTaken = await User.findOne({ email: req.body.email });
   if (isTaken) return resHandler(res, "fail", 409, "Email is taken");
-  const result = await User.create(req.body);
+  let data = req.body;
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
+  const result = await User.create(data);
   const { password, ...others } = result._doc;
   return resHandler(res, "success", 201, {
     message: "Login is required to access protected resources",
@@ -41,7 +52,14 @@ const createUserView = async (req, res, next) => {
 const updateUserView = async (req, res, next) => {
   if (!req.userId === req.params.id)
     return resHandler(res, "fail", 403, "Forbiden access");
-
+  const data = req.body;
+  if (data["password"]) {
+    delete data["password"];
+  }
+  if (req.file && req.file.path !== undefined) {
+    data["image"] = req.file.path;
+    data["imageID"] = req.file.public_id;
+  }
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
@@ -64,7 +82,7 @@ const deleteUserView = async (req, res, next) => {
 
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return resHandler(res, "fail", 400, "Invalid credentials");
+    return resHandler(res, "fail", 400, { message: "Invalid credentials" });
   }
 
   const deleteUser = await user.delete();
@@ -124,7 +142,7 @@ const refreshTokenView = async (req, res, next) => {
       roles: userToken.user.roles,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: parseInt(process.env.JWT_EXPIRATION) }
+    { expiresIn: "24h" }
   );
 
   return resHandler(res, "success", 200, { token: accessToken });
@@ -133,11 +151,11 @@ const refreshTokenView = async (req, res, next) => {
 const logoutWithToken = async (res, accessToken) => {
   let token = accessToken.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-    if (err) return resHandler(res, "fail", 403, "Already logged out");
+    if (err) return resHandler(res, "success", 200, "Logout successful");
 
     const refreshtoken = await RefreshToken.findByIdAndDelete(decoded._id);
     if (!refreshtoken) console.log("Deleted from token");
-    return resHandler(res, "fail", 403, "Already logged out");
+    return resHandler(res, "success", 200, "Log out successful");
   });
 };
 
@@ -145,7 +163,7 @@ const logoutView = async (req, res, next) => {
   const cookies = req.cookies;
   const accessToken = req.headers["authorization"];
   if (!cookies.jwt && !accessToken)
-    return resHandler(res, "fail", 403, "Already signed out");
+    return resHandler(res, "success", 200, "Log out successful");
 
   if (cookies.jwt) {
     const refreshToken = cookies.jwt;
@@ -153,12 +171,117 @@ const logoutView = async (req, res, next) => {
       token: refreshToken,
     }).exec();
     if (!userToken || !accessToken)
-      return resHandler(res, "fail", 403, "Already signed out");
+      return resHandler(res, "success", 200, "Log out successful");
 
     return clearCookie(res);
   }
 
   return logoutWithToken(res, accessToken);
+};
+
+export const passwordReset = async (req, res, next) => {
+  const email = req.body.email;
+  const user = await User.findOne({ email: email });
+  if (!user)
+    return resHandler(res, "fail", 400, { message: "The user does not exist" });
+  let tokenObject = await resetTokenModel.findOne({ user: user._id });
+  let token;
+  if (!tokenObject) {
+    token = await resetTokenModel.createToken(user._id);
+  } else {
+    const validToken = await tokenObject.checkValid();
+    if (!validToken) {
+      token = await resetTokenModel.createToken(user._id);
+    } else {
+      token = tokenObject.token;
+    }
+  }
+
+  const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token}`;
+  await sendEmail(user.email, "Password reset", renderEmail(link));
+  return resHandler(res, "success", 200, {
+    message: "Password reset link sent to your email",
+  });
+};
+
+export const newPassword = async (req, res, next) => {
+  const token = req.params.token;
+  const user = await User.findById(req.params.id);
+  const tokenObject = await resetTokenModel.findOne({
+    user: user._id,
+    token: token,
+  });
+  if (!tokenObject) {
+    return resHandler(res, "fail", 400, { message: "Invalid link or expired" });
+  }
+  const validToken = await tokenObject.checkValid();
+  if (!validToken) {
+    return resHandler(res, "fail", 400, { message: "Invalid expired" });
+  }
+  user.password = req.body.password;
+  const newUser = await user.save();
+  await tokenObject.dump();
+
+  if (req.accepts()[0] == "text/html") {
+    return res.status(200).send(`
+    <body style="display: flex; align-items: center; height: 100%; justify-content: center;">
+    <div class="text-box" style="max-width: 400px; background-color: rgb(21, 92, 124); 
+    padding: 2rem; color: beige; border-radius: 30px;">
+        <h1>Your password has been changed successfully</h1>
+        <p >Use it to login!</p>
+    </div>
+    </body>
+    `);
+  }
+
+  return responseHandler(res, "success", 200, {
+    message: "Your password has been updated. Use the new password to login in",
+  });
+};
+
+export const resetLinkValidator = async (req, res, next) => {
+  const token = req.params.token;
+  const user = await User.findById(req.params.id);
+  if (!user)
+    return resHandler(res, "fail", 400, { message: "Invalid link or expired" });
+  const tokenObject = await resetTokenModel.findOne({
+    user: user._id,
+    token: token,
+  });
+
+  if (!tokenObject) {
+    if (req.accepts()[0] == "text/html") {
+      return res.status(400).send("<h1>Invalid link or expired</h1>");
+    } else {
+      return resHandler(res, "fail", 400, {
+        message: "Invalid link or expired",
+      });
+    }
+  }
+  const validToken = await tokenObject.checkValid();
+  if (!validToken) {
+    if (req.accepts()[0] == "text/html") {
+      return res.status(400).send("<h1>Invalid link or expired</h1>");
+    } else {
+      return resHandler(res, "fail", 400, {
+        message: "Invalid link or expired",
+      });
+    }
+  }
+  if (req.accepts()[0] == "text/html") {
+    return res.status(200).sendFile("reset.html", {
+      root: join(__dirname, "templates"),
+      dotfiles: "deny",
+      headers: {
+        "x-timestamp": Date.now(),
+        "x-sent": true,
+      },
+    });
+  } else {
+    return resHandler(re, "success", 200, {
+      message: "The link is valid. Use it to send the new Password",
+    });
+  }
 };
 //add your function to export
 export {
