@@ -1,4 +1,4 @@
-![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ffeytonf) [![GitHub forks](https://img.shields.io/github/forks/feyton/atlp-backend?style=social)](https://github.com/feyton/atlp-backend/network) [![Maintainability](https://api.codeclimate.com/v1/badges/a17c4a38e6fb7e73a3f1/maintainability)](https://codeclimate.com/github/feyton/atlp-backend/maintainability) [![GitHub stars](https://img.shields.io/github/stars/feyton/atlp-backend)](https://github.com/feyton/atlp-backend/stargazers) [![GitHub issues](https://img.shields.io/github/issues/feyton/atlp-backend)](https://github.com/feyton/atlp-backend/issues) [![Coverage Status](https://coveralls.io/repos/github/feyton/atlp-backend/badge.svg?branch=githubAction)](https://coveralls.io/github/feyton/atlp-backend?branch=main) [![CI](https://github.com/feyton/atlp-backend/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/feyton/atlp-backend/actions/workflows/main.yml)
+![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ffeytonf) [![GitHub forks](https://img.shields.io/github/forks/feyton/atlp-backend?style=social)](https://github.com/feyton/atlp-backend/network) [![Maintainability](https://api.codeclimate.com/v1/badges/a17c4a38e6fb7e73a3f1/maintainability)](https://codeclimate.com/github/feyton/atlp-backend/maintainability) [![GitHub stars](https://img.shields.io/github/stars/feyton/atlp-backend)](https://github.com/feyton/atlp-backend/stargazers) [![GitHub issues](https://img.shields.io/github/issues/feyton/atlp-backend)](https://github.com/feyton/atlp-backend/issues) [![Coverage Status](https://coveralls.io/repos/github/feyton/atlp-backend/badge.svg?branch=main)](https://coveralls.io/github/feyton/atlp-backend?branch=main) [![CI](https://github.com/feyton/atlp-backend/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/feyton/atlp-backend/actions/workflows/main.yml)
 # atlp-backend my brand
 The backend code for the ATLP Project.
 
@@ -26,7 +26,6 @@ code        Response structure
 - 4xx        {status: fail, code: 4xx, message: string}
 - 5xx         {status: error, code: 5xx, message: string}
 ```
-
 ## Servers
 
 The API is hosted on Heroku on different pipelines.
@@ -97,6 +96,18 @@ EMAIL_PORT=< email port >
 I want to thank everyone who contributed a lot especially:
 - My TTL [@Jkadhuwa](https://github.com/Jkadhuwa/jkadhuwa)
 
+## Acknowledgement
+I want to thank everyone who contributed a lot especially @Jkadhuwa
+### Tools Used
+- NodeJS- Web Server
+- ExpressJs - Server framework
+- ESLint - JavaScript code and syntax linter
+- Mocha - Javascript test framework
+- Chai - Javascript Assertion library
+- c8 - Test coverage tool
+- Postman - for tetsing API endpoints
+- Heroku - for Hosting
+- GitPages - for Frontend deployment
 ### Integrations
 1. PivotalTracker
 2. Codeclimate
