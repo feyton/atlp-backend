@@ -3,7 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { static as staticExpress } from "express";
-import mongoose from "mongoose";
+import rateLimit from "express-rate-limit";
 import path, { join } from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -17,8 +17,15 @@ import { errLogger, logger } from "./config/utils.js";
 import { router as IndexRouter } from "./indexApp/routes.js";
 import { IndexView } from "./indexApp/views.js";
 
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 dotenv.config();
-connectDB();
+
 const __dirname = path.resolve();
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 const apiRoute = process.env.API_BASE || "/api/v1/";
@@ -38,6 +45,7 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, optionsToCustomizeSwagger, { explorer: true })
 );
+app.use(limiter);
 
 app.use(apiRoute, IndexRouter);
 app.get("/", IndexView);
@@ -52,11 +60,14 @@ app.all("*", (req, res) => {
 
 app.use(errLogger);
 const PORT = process.env.PORT || 3500;
-mongoose.connection.once("open", () => {
-  console.log("Mongoose connected");
-  app.listen(PORT, () => {
-    console.log("Server started: ", PORT);
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("Server started: ", PORT);
+    });
+  })
+  .catch((err) => {
+    console.log(err);
   });
-});
 
 export { app, apiRoute };

@@ -6,11 +6,9 @@ on:
   push:
     branches:
       - main
-      - staging
   pull_request:
     branches: 
       - main
-      - staging
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -29,8 +27,13 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 6000:27017
     env:
-      TESTING_DB_URL: ${{secrets.TESTING_DB_URL}}
+      TESTING_DB_URL: mongodb://localhost:6000
       ACCESS_TOKEN_SECRET: ${{secrets.ACCESS_TOKEN_SECRET}}
       REFRESH_TOKEN_SECRET: ${{secrets.REFRESH_TOKEN_SECRET}}
       JWT_EXPIRATION: ${{secrets.JWT_EXPIRATION}}
@@ -45,7 +48,7 @@ jobs:
         with:
           node-version: "16.x"
           cache: "npm"
-      - run: npm install
+      - run: npm ci
       - run: npm run coverage
       - name: coveralls
         uses: coverallsapp/github-action@master
@@ -64,7 +67,7 @@ jobs:
       - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "atlp-backend-staging" #Must be unique in Heroku
+          heroku_app_name: "atlp-backend" #Must be unique in Heroku
           heroku_email: "tumbafabruce@gmail.com"
 
 
