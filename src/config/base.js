@@ -13,20 +13,12 @@ export const connectDB = async () => {
   try {
     if (process.env.NODE_ENV == "test") {
       console.log("Test database loaded");
-      mongoose.connect(process.env.TESTING_DB_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      mongoose.connect(process.env.TESTING_DB_URL);
       console.log("Connected to the testing database");
     } else {
-      mongoose
-        .connect(process.env.MONGO_DB_URL, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-        })
-        .then(() => {
-          console.log("Connected to the cloud");
-        });
+      mongoose.connect(process.env.MONGO_DB_URL).then(() => {
+        console.log("Connected to the cloud");
+      });
     }
   } catch (err) {
     console.error(err);

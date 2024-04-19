@@ -1,0 +1,11 @@
+services:
+  db:
+    image: mongo:latest # Or specific version like mongo:4.4
+    restart: always # Restart automatically on failure
+    ports:
+      - "27017:27017" # Map standard MongoDB port to your host
+    volumes:
+      - mongodb_data:/data/db  
+
+volumes:
+  mongodb_data:

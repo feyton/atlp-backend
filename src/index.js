@@ -31,6 +31,7 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions);
 const apiRoute = process.env.API_BASE || "/api/v1/";
 
 const app = express();
+app.set('trust proxy', 1); 
 app.use(logger);
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));

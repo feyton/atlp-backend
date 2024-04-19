@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { existsSync, promises as fsPromises } from "fs";
-import nodeEmoji from "node-emoji";
+import * as nodeEmoji from 'node-emoji'
 import path, { join } from "path";
 import { v4 as uuid } from "uuid";
 
