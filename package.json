@@ -8,7 +8,8 @@
     "start": "node ./src/index",
     "dev": "nodemon ./src/index",
     "babelBuild": "babel src -d lib && node ./lib/index",
-    "coverage": "c8 --check-coverage npm t"
+    "coverage": "c8 --check-coverage npm t",
+    "ci": "yarn install --immutable --immutable-cache --check-cache"
   },
   "repository": {
     "type": "git",
